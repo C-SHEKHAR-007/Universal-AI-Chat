@@ -11,6 +11,7 @@ import {
   ModelMeta,
 } from '../types';
 import { PROVIDER_ENDPOINTS, DEFAULT_CHAT_PARAMETERS } from '../constants';
+import { formatBytes } from '../utils';
 
 export class OllamaProvider implements AIProvider {
   config: AIProviderConfig;
@@ -76,7 +77,7 @@ export class OllamaProvider implements AIProvider {
       }
 
       return data.models.map((m: any) => {
-        const sizeGB = m.size ? (m.size / (1024 * 1024 * 1024)).toFixed(1) + ' GB' : undefined;
+        const sizeFormatted = m.size ? formatBytes(m.size) : undefined;
         const paramSize = m.details?.parameter_size || (m.name.includes(':') ? m.name.split(':')[1] : undefined);
         const family = m.details?.family || 'ollama';
         const quantization = m.details?.quantization_level;
@@ -87,7 +88,7 @@ export class OllamaProvider implements AIProvider {
           providerId: this.config.id,
           providerType: 'ollama',
           parameterSize: paramSize,
-          fileSizeFormatted: sizeGB,
+          fileSizeFormatted: sizeFormatted,
           family,
           quantization,
           modifiedAt: m.modified_at,

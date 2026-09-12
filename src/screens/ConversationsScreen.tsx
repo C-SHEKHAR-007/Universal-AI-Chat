@@ -30,6 +30,7 @@ import { useAppStore } from '../store/appStore';
 import { useChatStore } from '../store/chatStore';
 import { Conversation } from '../types';
 import { DEFAULT_CHAT_TITLE, TOOLTIP_CONFIG } from '../constants';
+import { formatClockTime } from '../utils';
 
 export const ConversationsScreen: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -195,10 +196,7 @@ export const ConversationsScreen: React.FC = () => {
                         {conv.title}
                       </Text>
                       <Text style={[styles.convTime, { color: colors.textMuted }]}>
-                        {new Date(conv.updatedAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {formatClockTime(conv.updatedAt)}
                       </Text>
                     </View>
                     <Text style={[styles.convSnippet, { color: colors.textSecondary }]} numberOfLines={1}>

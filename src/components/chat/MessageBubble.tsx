@@ -33,6 +33,7 @@ import {
   FALLBACK_MODEL_NAME,
   POPOVER_CONFIG,
 } from '../../constants';
+import { formatClockTime, formatDurationSeconds } from '../../utils';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -347,7 +348,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                               </Text>
                             </View>
                             <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
-                              {(message.telemetry.ttftMs / 1000).toFixed(2)}s
+                              {formatDurationSeconds(message.telemetry.ttftMs)}
                             </Text>
                           </View>
                         ) : null}
@@ -373,7 +374,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                               </Text>
                             </View>
                             <Text style={[styles.popoverStatValue, { color: colors.textMuted }]}>
-                              {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {formatClockTime(message.createdAt)}
                             </Text>
                           </View>
                         ) : null}

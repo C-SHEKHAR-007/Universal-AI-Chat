@@ -92,6 +92,7 @@ describe('AI Provider Engine E2E Tests', () => {
       expect(models[0].id).toBe('qwen3:8b');
       expect(models[0].parameterSize).toBe('8.2B');
       expect(models[0].quantization).toBe('Q4_K_M');
+      expect(models[0].fileSizeFormatted).toBe('4.5 GB');
     });
 
     it('should handle testConnection success and measure latency', async () => {

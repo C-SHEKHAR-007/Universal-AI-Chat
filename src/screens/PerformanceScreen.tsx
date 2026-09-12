@@ -22,18 +22,7 @@ import {
   DEFAULT_BENCHMARKS,
 } from '../constants';
 import { useResponsive } from '../hooks/useResponsive';
-
-const formatTimeAgo = (timestamp?: number) => {
-  if (!timestamp) return '';
-  const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 60) return 'Just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-};
+import { formatTimeAgo, formatDurationSeconds } from '../utils';
 
 export const PerformanceScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -278,7 +267,7 @@ export const PerformanceScreen: React.FC = () => {
                         <View style={styles.ttftPill}>
                           <Clock size={11} color={colors.textMuted} />
                           <Text style={[styles.ttftPillText, { color: colors.textSecondary }]}>
-                            {(item.ttftMs / 1000).toFixed(2)}s TTFT
+                            {formatDurationSeconds(item.ttftMs)} TTFT
                           </Text>
                         </View>
                       </View>
@@ -350,7 +339,7 @@ export const PerformanceScreen: React.FC = () => {
                       </View>
                     </View>
                     <Text style={[styles.tableTtft, { flex: 1, textAlign: 'right', color: colors.textSecondary }]}>
-                      {(item.ttftMs / 1000).toFixed(2)}s
+                      {formatDurationSeconds(item.ttftMs)}
                     </Text>
                     <Text style={[styles.tableTimeAgo, { flex: 1, textAlign: 'right', color: colors.textMuted }]}>
                       {formatTimeAgo(item.createdAt)}

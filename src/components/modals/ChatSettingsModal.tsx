@@ -19,7 +19,7 @@ import {
   CONTEXT_PRESET_SIZES,
   CONTEXT_PRESET_OPTIONS,
 } from '../../constants';
-import { calculateContextMetrics } from '../../utils/contextManager';
+import { calculateContextMetrics, formatTokens } from '../../utils';
 
 export const ChatSettingsModal: React.FC = () => {
   const { colors } = useTheme();
@@ -88,13 +88,6 @@ export const ChatSettingsModal: React.FC = () => {
     setMaxTokens(DEFAULT_PARAMETERS.maxTokens.toString());
     setContextWin(DEFAULT_PARAMETERS.contextWindow.toString());
     setSystemPrompt(DEFAULT_PARAMETERS.systemPrompt);
-  };
-
-  const formatTokens = (tokens: number) => {
-    if (tokens >= 1000) {
-      return (tokens / 1000).toFixed(1) + 'k';
-    }
-    return tokens.toString();
   };
 
   return (
