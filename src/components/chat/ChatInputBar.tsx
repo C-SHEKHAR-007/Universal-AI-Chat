@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
 import { Plus, ArrowUp, Square, Settings2, Sparkles, ChevronRight, X } from 'lucide-react-native';
 import { spacing, typography, borderRadius } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/appStore';
 import { useChatStore } from '../../store/chatStore';
+import { useResponsive } from '../../hooks/useResponsive';
 import { Tooltip } from '../common/Tooltip';
 import {
   INPUT_PLACEHOLDER,
@@ -28,6 +29,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
     setModelSelectorOpen,
     setChatSettingsOpen,
   } = useAppStore();
+  const { isPhone } = useResponsive();
+  const isMobile = Platform.OS === 'android' || Platform.OS === 'ios' || isPhone;
 
   useEffect(() => {
     if (inputDraft) {
@@ -45,7 +48,18 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
   };
 
   const handleKeyDown = (e: any) => {
-    // On web, handle Enter to send and Shift+Enter for newline
+    // In mobile view or on mobile devices, Enter moves to next line (default multiline behavior).
+    // The UI send button next to the input is used to send the message.
+    if (isMobile) {
+      return;
+    }
+
+    // On desktop, ignore Enter if IME is composing
+    if (e?.nativeEvent?.isComposing || e?.nativeEvent?.keyCode === 229) {
+      return;
+    }
+
+    // On web desktop, handle Enter to send and Shift+Enter for newline
     if (e?.nativeEvent?.key === 'Enter' && !e?.nativeEvent?.shiftKey) {
       e?.preventDefault?.();
       handleSend();
@@ -81,6 +95,9 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
           value={text}
           onChangeText={setText}
           multiline
+          blurOnSubmit={false}
+          enterKeyHint={isMobile ? 'enter' : 'send'}
+          returnKeyType={isMobile ? 'default' : 'send'}
           maxLength={MAX_INPUT_LENGTH}
           onKeyPress={handleKeyDown}
         />
