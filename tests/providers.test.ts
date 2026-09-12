@@ -9,7 +9,7 @@ describe('AI Provider Engine E2E Tests', () => {
     id: 'ollama-test',
     name: 'Test Ollama',
     type: 'ollama',
-    baseUrl: 'http://192.168.1.11:11434',
+    baseUrl: 'http://localhost:11434',
     isActive: true,
     createdAt: Date.now(),
     updatedAt: Date.now(),

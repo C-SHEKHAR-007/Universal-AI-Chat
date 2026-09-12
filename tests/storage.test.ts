@@ -9,25 +9,24 @@ describe('Storage & Migration E2E Tests', () => {
     storage = new UniversalStorage();
   });
 
-  describe('Provider Persistence & Auto-Migration', () => {
-    it('should initialize with default providers including LAN and localhost', async () => {
+  describe('Provider Persistence & Storage', () => {
+    it('should initialize with default providers including localhost and OpenAI', async () => {
       const providers = await storage.getProviders();
-      expect(providers.length).toBeGreaterThanOrEqual(3);
-
-      const lanProvider = providers.find((p) => p.baseUrl.includes('192.168.1.11'));
-      expect(lanProvider).toBeDefined();
-      expect(lanProvider?.type).toBe('ollama');
+      expect(providers.length).toBeGreaterThanOrEqual(2);
 
       const localProvider = providers.find((p) => p.baseUrl.includes('localhost'));
       expect(localProvider).toBeDefined();
+      expect(localProvider?.type).toBe('ollama');
+
+      const openAiProvider = providers.find((p) => p.type === 'openai_compatible');
+      expect(openAiProvider).toBeDefined();
     });
 
-    it('should auto-migrate legacy localhost endpoints and ensure PC IP is present', async () => {
-      // Simulate stored legacy provider configuration missing LAN IP
-      const legacyList: AIProviderConfig[] = [
+    it('should persist and retrieve custom saved provider configurations', async () => {
+      const list: AIProviderConfig[] = [
         {
-          id: 'old_ollama',
-          name: 'Old Ollama',
+          id: 'custom_ollama',
+          name: 'Custom Ollama',
           type: 'ollama',
           baseUrl: 'http://localhost:11434',
           isActive: true,
@@ -35,12 +34,11 @@ describe('Storage & Migration E2E Tests', () => {
           updatedAt: Date.now(),
         },
       ];
-      await storage.saveProviders(legacyList);
+      await storage.saveProviders(list);
 
-      // Now getProviders should run auto-migration
-      const migrated = await storage.getProviders();
-      const hasLan = migrated.some((p) => p.baseUrl.includes('192.168.1.11'));
-      expect(hasLan).toBe(true);
+      const retrieved = await storage.getProviders();
+      expect(retrieved.length).toBe(1);
+      expect(retrieved[0].id).toBe('custom_ollama');
     });
 
     it('should add, update, and delete custom providers', async () => {
@@ -48,7 +46,7 @@ describe('Storage & Migration E2E Tests', () => {
         id: 'prov_custom_lmstudio',
         name: 'LM Studio (Local)',
         type: 'openai_compatible',
-        baseUrl: 'http://192.168.1.11:1234',
+        baseUrl: 'http://localhost:1234',
         isActive: true,
         createdAt: Date.now(),
         updatedAt: Date.now(),

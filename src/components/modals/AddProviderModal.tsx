@@ -18,7 +18,6 @@ import { ProviderFactory } from '../../providers/providerFactory';
 import { storage } from '../../storage/storageAdapter';
 import {
   DEFAULT_OLLAMA_URL,
-  DEFAULT_OLLAMA_LAN_URL,
   DEFAULT_OPENAI_URL,
   DEFAULT_CUSTOM_CHAT_ENDPOINT,
   PROVIDER_PRESETS,
@@ -289,7 +288,7 @@ export const AddProviderModal: React.FC = () => {
                     color: colors.textPrimary,
                   },
                 ]}
-                placeholder={DEFAULT_OLLAMA_LAN_URL}
+                placeholder="http://localhost:11434 or http://192.168.x.x:11434"
                 placeholderTextColor={colors.textMuted}
                 value={baseUrl}
                 onChangeText={setBaseUrl}

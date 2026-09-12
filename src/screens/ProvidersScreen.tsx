@@ -22,7 +22,6 @@ import { useAppStore } from '../store/appStore';
 import { AIProviderConfig } from '../types';
 import { ProviderFactory } from '../providers/providerFactory';
 import { storage } from '../storage/storageAdapter';
-import { DEFAULT_OLLAMA_LAN_URL } from '../constants';
 
 export const ProvidersScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -68,44 +67,21 @@ export const ProvidersScreen: React.FC = () => {
     });
   };
 
-  const handleQuickConnectPC = async () => {
-    const pcProvider: AIProviderConfig = {
-      id: 'prov_ollama_pc',
-      name: `Ollama (${DEFAULT_OLLAMA_LAN_URL})`,
-      type: 'ollama',
-      baseUrl: DEFAULT_OLLAMA_LAN_URL,
-      isActive: true,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    await storage.updateProvider(pcProvider);
-    await refreshProviders();
-    await setDefaultProviderId('prov_ollama_pc');
-    handleTest(pcProvider);
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="AI Providers" />
 
       <View style={styles.content}>
-        {/* Mobile Wi-Fi Network Hint & Quick Connect Card */}
-        <View style={[styles.wifiTipCard, { backgroundColor: colors.primaryMuted, borderColor: colors.primary }]}>
+        {/* Network & Local Connection Tip */}
+        <View style={[styles.wifiTipCard, { backgroundColor: colors.primaryMuted, borderColor: colors.borderLight }]}>
           <View style={styles.wifiTipContent}>
             <Text style={[styles.wifiTipTitle, { color: colors.primary }]}>
-              📱 Mobile Wi-Fi Endpoint
+              🌐 Local & Cloud AI Endpoints
             </Text>
             <Text style={[styles.wifiTipText, { color: colors.textSecondary }]}>
-              On mobile, use your computer's Wi-Fi IP: <Text style={{ fontWeight: 'bold', color: colors.textPrimary }}>{DEFAULT_OLLAMA_LAN_URL}</Text>
+              Connect to local Ollama, LM Studio, or cloud providers like OpenAI, Groq, OpenRouter, and DeepSeek.
             </Text>
           </View>
-          <TouchableOpacity
-            style={[styles.wifiQuickBtn, { backgroundColor: colors.primary }]}
-            onPress={handleQuickConnectPC}
-          >
-            <Zap size={14} color="#fff" />
-            <Text style={styles.wifiQuickBtnText}>Connect PC</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Add Provider CTA Button */}

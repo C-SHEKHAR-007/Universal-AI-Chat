@@ -1,7 +1,6 @@
 import { AIProviderConfig, ProviderType } from '../types';
 
 export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
-export const DEFAULT_OLLAMA_LAN_URL = 'http://192.168.1.11:11434';
 export const DEFAULT_OPENAI_URL = 'https://api.openai.com';
 export const DEFAULT_CUSTOM_CHAT_ENDPOINT = '/v1/chat/completions';
 
@@ -14,21 +13,12 @@ export const PROVIDER_ENDPOINTS = {
 
 export const DEFAULT_PROVIDERS: AIProviderConfig[] = [
   {
-    id: 'prov_ollama_lan',
-    name: 'Ollama (My PC)',
-    type: 'ollama',
-    baseUrl: DEFAULT_OLLAMA_LAN_URL,
-    isActive: true,
-    isDefault: true,
-    createdAt: Date.now() - 86400000 * 5,
-    updatedAt: Date.now() - 86400000 * 5,
-  },
-  {
     id: 'prov_ollama_local',
     name: 'Ollama (Localhost)',
     type: 'ollama',
     baseUrl: DEFAULT_OLLAMA_URL,
     isActive: true,
+    isDefault: true,
     createdAt: Date.now() - 86400000 * 4,
     updatedAt: Date.now() - 86400000 * 4,
   },

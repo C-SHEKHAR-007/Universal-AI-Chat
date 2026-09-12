@@ -51,27 +51,11 @@ export class UniversalStorage {
       return DEFAULT_PROVIDERS;
     }
     try {
-      let list: AIProviderConfig[] = JSON.parse(raw);
-      // Auto-migrate any dummy .20 IP to user's real Wi-Fi IP
-      let changed = false;
-      list = list.map((p) => {
-        if (p.baseUrl.includes('192.168.1.20')) {
-          changed = true;
-          return { ...p, baseUrl: 'http://192.168.1.11:11434', name: 'Ollama (My PC: 192.168.1.11)' };
-        }
-        return p;
-      });
-
-      // Ensure user's real Wi-Fi IP endpoint exists in list
-      if (!list.some((p) => p.baseUrl.includes('192.168.1.11'))) {
-        list.unshift(DEFAULT_PROVIDERS[0]);
-        changed = true;
+      const list: AIProviderConfig[] = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) {
+        return list;
       }
-
-      if (changed) {
-        await this.saveProviders(list);
-      }
-      return list;
+      return DEFAULT_PROVIDERS;
     } catch {
       return DEFAULT_PROVIDERS;
     }
