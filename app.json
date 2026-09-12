@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.universal.aichat",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0b0f19"
@@ -24,6 +25,11 @@
     "plugins": [
       "expo-status-bar",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6c1b31c6-d4a1-4e0e-b1ad-73479d4a2bea"
+      }
+    }
   }
 }
