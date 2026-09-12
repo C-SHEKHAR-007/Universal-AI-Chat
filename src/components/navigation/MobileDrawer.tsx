@@ -8,7 +8,9 @@ import {
   ScrollView,
   TextInput,
   Platform,
+  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Brain,
   MessageSquare,
@@ -76,6 +78,10 @@ export const MobileDrawer: React.FC = () => {
     providers,
   } = useAppStore();
   const { clearActiveChat } = useChatStore();
+  const insets = useSafeAreaInsets();
+  const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
+  const topPadding = Math.max(insets.top, statusBarHeight);
+  const bottomPadding = insets.bottom;
 
   if (!isDrawerOpen) return null;
 
@@ -111,6 +117,8 @@ export const MobileDrawer: React.FC = () => {
           {
             backgroundColor: colors.backgroundSecondary,
             borderRightColor: colors.border,
+            paddingTop: topPadding > 0 ? topPadding + spacing.sm : spacing.lg,
+            paddingBottom: bottomPadding > 0 ? bottomPadding + spacing.sm : spacing.lg,
           },
         ]}
       >
@@ -437,7 +445,7 @@ const styles = StyleSheet.create({
   drawerContainer: {
     width: 290,
     height: '100%',
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
     borderRightWidth: 1,
     justifyContent: 'space-between',
   },
