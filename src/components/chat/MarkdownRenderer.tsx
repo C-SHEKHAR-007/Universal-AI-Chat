@@ -20,6 +20,7 @@ import {
 } from 'lucide-react-native';
 import { spacing, typography, borderRadius } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
+import { copyToClipboard } from '../../utils';
 
 interface MarkdownRendererProps {
   content: string;
@@ -493,9 +494,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
   const { colors } = useTheme();
   const [copied, setCopied] = useState(false);
 
-  const handleCopyCode = () => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(code);
+  const handleCopyCode = async () => {
+    const success = await copyToClipboard(code);
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

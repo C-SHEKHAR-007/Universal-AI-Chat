@@ -14,6 +14,7 @@
     "@expo/metro-runtime": "~57.0.15",
     "@expo/vector-icons": "^15.0.2",
     "expo": "57.0.22",
+    "expo-clipboard": "~57.0.2",
     "expo-font": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "lucide-react-native": "^0.475.0",

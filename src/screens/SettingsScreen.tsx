@@ -22,16 +22,21 @@ import { spacing, typography, borderRadius } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 import { Header } from '../components/common/Header';
 import { useAppStore } from '../store/appStore';
+import { useChatStore } from '../store/chatStore';
 import { storage } from '../storage/storageAdapter';
 import { APP_NAME, APP_VERSION, APP_SUBTITLE, TOAST_DURATION_MS } from '../constants';
+import { copyToClipboard } from '../utils';
 
 export const SettingsScreen: React.FC = () => {
   const { colors, isDark, toggleTheme } = useTheme();
   const [streamStats, setStreamStats] = useState(true);
   const [clearedMsg, setClearedMsg] = useState(false);
-  const { loadInitialData } = useAppStore();
+  const [backupMsg, setBackupMsg] = useState(false);
+  const { loadInitialData, setActiveConversationId } = useAppStore();
 
   const handleClearHistory = async () => {
+    useChatStore.getState().clearActiveChat();
+    await setActiveConversationId(null);
     await storage.saveConversations([]);
     await loadInitialData();
     setClearedMsg(true);
@@ -44,9 +49,10 @@ export const SettingsScreen: React.FC = () => {
     const benchmarks = await storage.getBenchmarks();
     const payload = JSON.stringify({ conversations: convs, providers, benchmarks }, null, 2);
 
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(payload);
-      alert('Application backup copied to clipboard in JSON format!');
+    const success = await copyToClipboard(payload);
+    if (success) {
+      setBackupMsg(true);
+      setTimeout(() => setBackupMsg(false), TOAST_DURATION_MS);
     }
   };
 
@@ -117,13 +123,19 @@ export const SettingsScreen: React.FC = () => {
               <View style={styles.rowLeft}>
                 <Download color={colors.success} size={20} />
                 <View>
-                  <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>Backup Data</Text>
+                  <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
+                    {backupMsg ? 'Copied to Clipboard!' : 'Backup Data'}
+                  </Text>
                   <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                    Export conversations & benchmarks
+                    {backupMsg ? 'JSON data ready to paste or save' : 'Export conversations & benchmarks'}
                   </Text>
                 </View>
               </View>
-              <ChevronRight color={colors.textMuted} size={18} />
+              {backupMsg ? (
+                <CheckCircle2 color={colors.success} size={20} />
+              ) : (
+                <ChevronRight color={colors.textMuted} size={18} />
+              )}
             </TouchableOpacity>
 
             <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />

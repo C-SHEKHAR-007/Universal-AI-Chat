@@ -33,7 +33,7 @@ import {
   FALLBACK_MODEL_NAME,
   POPOVER_CONFIG,
 } from '../../constants';
-import { formatClockTime, formatDurationSeconds } from '../../utils';
+import { formatClockTime, formatDurationSeconds, copyToClipboard } from '../../utils';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -80,9 +80,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   const isUser = message.role === 'user';
 
-  const handleCopy = (text: string) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
+  const handleCopy = async (text: string) => {
+    const success = await copyToClipboard(text);
+    if (success) {
       setCopiedText(true);
       setTimeout(() => setCopiedText(false), 2000);
     }
