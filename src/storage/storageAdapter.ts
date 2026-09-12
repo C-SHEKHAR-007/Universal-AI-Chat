@@ -9,6 +9,7 @@ import {
   STORAGE_KEYS,
   DEFAULT_PROVIDERS,
   DEFAULT_PARAMETERS,
+  DEFAULT_CHAT_PARAMETERS,
   DEFAULT_BENCHMARKS,
 } from '../constants';
 
@@ -93,7 +94,22 @@ export class UniversalStorage {
     const raw = await this.getItem(STORAGE_KEYS.CONVERSATIONS);
     if (!raw) return [];
     try {
-      return JSON.parse(raw);
+      const list: Conversation[] = JSON.parse(raw);
+      // Safety migration: clamp oversized context windows saved before the 4k default fix
+      return list.map((conv) => {
+        const p = conv.parameters;
+        if (!p) return conv;
+        const needsClamp = p.contextWindow > 65536 || p.maxTokens > 32768;
+        if (!needsClamp) return conv;
+        return {
+          ...conv,
+          parameters: {
+            ...p,
+            contextWindow: p.contextWindow > 65536 ? DEFAULT_CHAT_PARAMETERS.contextWindow : p.contextWindow,
+            maxTokens: p.maxTokens > 32768 ? DEFAULT_CHAT_PARAMETERS.maxTokens : p.maxTokens,
+          },
+        };
+      });
     } catch {
       return [];
     }

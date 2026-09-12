@@ -123,12 +123,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     const convs = await storage.getConversations();
     const found = convs.find((c) => c.id === id) || null;
     if (found) {
+      // Clamp oversized context window saved from old version (prevents OOM on CPU)
+      const savedParams = found.parameters || { ...DEFAULT_PARAMETERS };
+      const safeParams = {
+        ...savedParams,
+        contextWindow: savedParams.contextWindow > 65536
+          ? DEFAULT_CHAT_PARAMETERS.contextWindow
+          : savedParams.contextWindow,
+        maxTokens: savedParams.maxTokens > 32768
+          ? DEFAULT_CHAT_PARAMETERS.maxTokens
+          : savedParams.maxTokens,
+      };
       set({
         activeConversationId: id,
-        activeConversation: found,
+        activeConversation: { ...found, parameters: safeParams },
         activeProviderId: found.providerId,
         activeModelId: found.modelId,
-        chatParameters: found.parameters || { ...DEFAULT_PARAMETERS },
+        chatParameters: safeParams,
       });
       await getChatStore()?.getState().loadMessages(id);
       pushConversationToUrl(id);
