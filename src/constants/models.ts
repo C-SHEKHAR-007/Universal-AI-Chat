@@ -1,8 +1,8 @@
 import { ModelMeta } from '../types';
 import { DEFAULT_PROVIDER_ID } from './providers';
 
-export const DEFAULT_MODEL_ID = 'qwen3:8b';
-export const DEFAULT_CUSTOM_MODEL_CONTEXT_LENGTH = 100000;
+export const DEFAULT_MODEL_ID = 'phi3:latest';
+export const DEFAULT_CUSTOM_MODEL_CONTEXT_LENGTH = 4096;
 
 export const DEFAULT_MODELS: ModelMeta[] = [
   {

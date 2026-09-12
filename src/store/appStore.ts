@@ -9,6 +9,7 @@ import {
   DEFAULT_MODEL_ID,
   DEFAULT_MODELS,
   DEFAULT_PARAMETERS,
+  DEFAULT_CHAT_PARAMETERS,
   DEFAULT_CHAT_TITLE,
   UNTITLED_CHAT_TITLE,
   PROVIDER_DEFAULT_MODEL_IDS,
@@ -295,6 +296,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       ? storedDefaultMod
       : (providerModels[0]?.id || DEFAULT_MODEL_ID);
 
+    // Safety migration: if previously stored contextWindow is too large for CPU,
+    // silently clamp it back to a safe value to prevent OOM crashes.
+    const currentParams = get().chatParameters;
+    const safeContextWindow = currentParams.contextWindow > 65536
+      ? DEFAULT_CHAT_PARAMETERS.contextWindow
+      : currentParams.contextWindow;
+    const safeMaxTokens = currentParams.maxTokens > 32768
+      ? DEFAULT_CHAT_PARAMETERS.maxTokens
+      : currentParams.maxTokens;
+
     set({
       theme: savedTheme || DEFAULT_THEME,
       providers,
@@ -303,6 +314,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       defaultModelId: defaultModel,
       activeProviderId: defaultProvider,
       activeModelId: defaultModel,
+      chatParameters: {
+        ...currentParams,
+        contextWindow: safeContextWindow,
+        maxTokens: safeMaxTokens,
+      },
     });
 
     await storage.setDefaultProviderId(defaultProvider);

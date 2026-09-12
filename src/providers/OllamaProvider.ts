@@ -167,6 +167,7 @@ export class OllamaProvider implements AIProvider {
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
     let lastProgressTime = 0;
+    let inThinkingPhase = false;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -181,21 +182,38 @@ export class OllamaProvider implements AIProvider {
         if (!line || !line.trim()) continue;
         try {
           const json = JSON.parse(line);
-          const chunkContent = json.message?.content || '';
+          const thinkingText = json.message?.thinking || '';
+          const regularContent = json.message?.content || '';
 
-          if (chunkContent) {
+          let chunkToEmit = '';
+
+          if (thinkingText) {
+            if (!inThinkingPhase) {
+              inThinkingPhase = true;
+              chunkToEmit += '> [!NOTE] Thinking Process\n> ';
+            }
+            chunkToEmit += thinkingText.replace(/\n/g, '\n> ');
+          } else if (regularContent) {
+            if (inThinkingPhase) {
+              inThinkingPhase = false;
+              chunkToEmit += '\n\n';
+            }
+            chunkToEmit += regularContent;
+          }
+
+          if (chunkToEmit) {
             if (firstTokenTime === null) {
               firstTokenTime = Date.now();
               const ttft = firstTokenTime - startTime;
               callbacks.onFirstToken?.(ttft);
             }
-            accumulatedText += chunkContent;
+            accumulatedText += chunkToEmit;
             totalCompletionTokens++;
 
             const now = Date.now();
             // Dispatch chunk immediately
             callbacks.onChunk({
-              text: chunkContent,
+              text: chunkToEmit,
               isFirstChunk: firstTokenTime === now,
               completionTokens: totalCompletionTokens,
             });

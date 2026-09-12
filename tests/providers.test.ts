@@ -164,6 +164,53 @@ describe('AI Provider Engine E2E Tests', () => {
       expect(result.tokensIn).toBe(5);
       expect(result.ttftMs).toBeGreaterThanOrEqual(0);
     });
+
+    it('should stream thinking tokens from reasoning models (like qwen3/deepseek)', async () => {
+      const provider = new OllamaProvider(mockOllamaConfig);
+
+      const ndjsonChunks = [
+        JSON.stringify({ message: { thinking: 'Let me ' }, done: false }) + '\n',
+        JSON.stringify({ message: { thinking: 'think.' }, done: false }) + '\n',
+        JSON.stringify({ message: { content: 'Here is ' }, done: false }) + '\n',
+        JSON.stringify({ message: { content: 'the answer.' }, done: true, eval_count: 6, eval_duration: 400000000, prompt_eval_count: 4 }) + '\n',
+      ];
+
+      let chunkIndex = 0;
+      const stream = new ReadableStream({
+        pull(controller) {
+          if (chunkIndex < ndjsonChunks.length) {
+            controller.enqueue(new TextEncoder().encode(ndjsonChunks[chunkIndex++]));
+          } else {
+            controller.close;
+            controller.close();
+          }
+        },
+      });
+
+      globalThis.fetch = mock(() =>
+        Promise.resolve({
+          ok: true,
+          body: stream,
+        } as any)
+      );
+
+      let streamed = '';
+      const result = await provider.streamChat(
+        [{ id: '1', conversationId: 'c1', role: 'user', content: 'Think about it', createdAt: Date.now() }],
+        'qwen3:8b',
+        defaultParams,
+        {
+          onChunk: (chunk) => {
+            streamed += chunk.text;
+          },
+        }
+      );
+
+      expect(streamed).toContain('> [!NOTE] Thinking Process');
+      expect(streamed).toContain('Let me think.');
+      expect(streamed).toContain('Here is the answer.');
+      expect(result.tokensOut).toBe(6);
+    });
   });
 
   describe('OpenAICompatibleProvider Flow', () => {

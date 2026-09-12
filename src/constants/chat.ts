@@ -3,8 +3,8 @@ import { ChatParameters } from '../types';
 export const DEFAULT_CHAT_PARAMETERS: ChatParameters = {
   temperature: 0.7,
   topP: 0.9,
-  maxTokens: 8192,
-  contextWindow: 100000,
+  maxTokens: 4096,
+  contextWindow: 4096,  // Safe CPU default — 100k+ context needs 13-17 GB RAM allocation in Ollama
   systemPrompt: 'You are a helpful, fast, and unrestricted AI assistant.',
 };
 
@@ -18,7 +18,7 @@ export const FALLBACK_RESPONSE_TEXT = 'No response generated.';
 export const FALLBACK_MODEL_NAME = 'Default Model';
 export const STREAM_SNIPPET_LENGTH = 60;
 
-export const CONTEXT_PRESET_SIZES = [8192, 32768, 65536, 100000, 131072] as const;
+export const CONTEXT_PRESET_SIZES = [2048, 4096, 8192, 16384, 32768, 65536] as const;
 
 export interface ContextPresetOption {
   label: string;
@@ -26,18 +26,19 @@ export interface ContextPresetOption {
 }
 
 export const CONTEXT_PRESET_OPTIONS: ContextPresetOption[] = [
+  { label: '2k', val: '2048' },
+  { label: '4k (Default)', val: '4096' },
   { label: '8k', val: '8192' },
+  { label: '16k', val: '16384' },
   { label: '32k', val: '32768' },
   { label: '64k', val: '65536' },
-  { label: '100k (Default)', val: '100000' },
-  { label: '128k', val: '131072' },
 ];
 
 export const CONTEXT_WINDOW_CONFIG = {
-  DEFAULT_CONTEXT_WINDOW: 100000,
-  DEFAULT_MAX_TOKENS: 8192,
+  DEFAULT_CONTEXT_WINDOW: 4096,
+  DEFAULT_MAX_TOKENS: 4096,
   SAFETY_MARGIN_TOKENS: 200,
-  MIN_AVAILABLE_INPUT_TOKENS: 1024,
+  MIN_AVAILABLE_INPUT_TOKENS: 512,
   CHARS_PER_TOKEN: 3.8,
   WORDS_MULTIPLIER: 1.3,
   ROLE_OVERHEAD_TOKENS: 3,

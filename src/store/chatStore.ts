@@ -300,7 +300,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const rawError = err?.message || 'Failed to communicate with AI provider.';
       const cleanError = rawError.replace(/^API Error \(\d+\):\s*/, '').trim() || rawError;
-      const formattedErrorContent = `⚠️ **Failed to get response**\n\n${rawError}\n\n* **Provider:** ${sessionProvider.name} (${sessionProvider.baseUrl})\n* **Model:** ${sessionModelId}\n\n*Tip: Check that the model exists on this provider and that the server is online with a valid API key.*`;
+      
+      let contextTip = '*Tip: Check that the model exists on this provider and that the server is online with a valid API key.*';
+      if (typeof window !== 'undefined' && sessionProvider.baseUrl.includes('192.168.')) {
+        contextTip = '💡 **Desktop Web Browser Tip:** Browsers block requests from `localhost` to LAN IPs (`192.168.x.x`) due to Private Network Access security. Please switch provider to **Ollama (Localhost)** (`http://localhost:11434`) when testing in your computer browser. The `192.168.x.x` URL is only for mobile phones on Wi-Fi.';
+      }
+
+      const formattedErrorContent = `⚠️ **Failed to get response**\n\n${rawError}\n\n* **Provider:** ${sessionProvider.name} (${sessionProvider.baseUrl})\n* **Model:** ${sessionModelId}\n\n${contextTip}`;
 
       const finalMsg: ChatMessage = {
         id: assistantMsgId,
