@@ -133,6 +133,9 @@ export class OllamaProvider implements AIProvider {
       }
     }
 
+    const rawNumCtx = parameters?.contextWindow ?? DEFAULT_CHAT_PARAMETERS.contextWindow;
+    const rawNumPredict = parameters?.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens;
+
     const payload = {
       model: modelId,
       messages: ollamaMessages,
@@ -140,8 +143,14 @@ export class OllamaProvider implements AIProvider {
       options: {
         temperature: parameters?.temperature ?? DEFAULT_CHAT_PARAMETERS.temperature,
         top_p: parameters?.topP ?? DEFAULT_CHAT_PARAMETERS.topP,
-        num_predict: parameters?.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens,
-        num_ctx: parameters?.contextWindow ?? DEFAULT_CHAT_PARAMETERS.contextWindow,
+        // Hard-cap at API boundary as last-resort guard against OOM (handles NaN, Infinity, or values
+        // that slipped past upstream clamps)
+        num_predict: Number.isFinite(rawNumPredict) && rawNumPredict > 0
+          ? Math.min(rawNumPredict, 32768)
+          : DEFAULT_CHAT_PARAMETERS.maxTokens,
+        num_ctx: Number.isFinite(rawNumCtx) && rawNumCtx > 0
+          ? Math.min(rawNumCtx, 65536)
+          : DEFAULT_CHAT_PARAMETERS.contextWindow,
       },
     };
 

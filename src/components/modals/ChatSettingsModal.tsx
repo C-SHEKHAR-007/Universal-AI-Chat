@@ -27,7 +27,7 @@ export const ChatSettingsModal: React.FC = () => {
     isChatSettingsOpen,
     setChatSettingsOpen,
     chatParameters,
-    setChatParameters,
+    saveChatParameters,
     activeModelId,
     setModelSelectorOpen,
     activeConversation,
@@ -72,11 +72,16 @@ export const ChatSettingsModal: React.FC = () => {
     if (activeConversationId && chatTitle.trim() && chatTitle.trim() !== activeConversation?.title) {
       updateConversationTitle(activeConversationId, chatTitle.trim(), true);
     }
-    setChatParameters({
-      temperature: temp,
-      topP,
-      maxTokens: parseInt(maxTokens, 10) || DEFAULT_PARAMETERS.maxTokens,
-      contextWindow: currentCtxLimit,
+    const safeContextWindow = Math.max(512, Math.min(currentCtxLimit || DEFAULT_CHAT_PARAMETERS.contextWindow, 65536));
+    const rawMaxTokens = parseInt(maxTokens, 10);
+    const safeMaxTokens = Number.isFinite(rawMaxTokens) && rawMaxTokens > 0
+      ? Math.min(rawMaxTokens, safeContextWindow - 200)
+      : DEFAULT_CHAT_PARAMETERS.maxTokens;
+    saveChatParameters({
+      temperature: Math.max(0, Math.min(temp, 2)),
+      topP: Math.max(0, Math.min(topP, 1)),
+      maxTokens: Math.max(1, safeMaxTokens),
+      contextWindow: safeContextWindow,
       systemPrompt,
     });
     setChatSettingsOpen(false);

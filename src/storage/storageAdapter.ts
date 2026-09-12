@@ -149,7 +149,26 @@ export class UniversalStorage {
   }
 
   async saveMessages(conversationId: string, messages: ChatMessage[]): Promise<void> {
-    await this.setItem(STORAGE_KEYS.MESSAGES_PREFIX + conversationId, JSON.stringify(messages));
+    try {
+      await this.setItem(STORAGE_KEYS.MESSAGES_PREFIX + conversationId, JSON.stringify(messages));
+    } catch (err: any) {
+      // Handle localStorage 5MB quota limit gracefully — this can happen with very long conversations
+      if (err?.name === 'QuotaExceededError' || err?.code === 22) {
+        console.warn('[Storage] Quota exceeded when saving messages for', conversationId,
+          '— conversation has', messages.length, 'messages. Consider clearing old chats.');
+        // Attempt to save with the last 50 messages as a fallback (keep the most recent context)
+        try {
+          const trimmed = messages.slice(-50);
+          await this.setItem(STORAGE_KEYS.MESSAGES_PREFIX + conversationId, JSON.stringify(trimmed));
+          console.warn('[Storage] Saved last 50 messages as quota fallback for', conversationId);
+        } catch {
+          // If even trimmed save fails, log and give up gracefully
+          console.error('[Storage] Failed to save messages even after trimming. Storage may be full.');
+        }
+      } else {
+        console.error('[Storage] Unexpected error saving messages:', err);
+      }
+    }
   }
 
   // --- Benchmarks ---

@@ -65,6 +65,7 @@ interface AppState {
   unarchiveConversation: (id: string) => Promise<void>;
   togglePinConversation: (id: string) => Promise<void>;
   refreshConversations: () => Promise<void>;
+  saveChatParameters: (params: Partial<ChatParameters>) => Promise<void>;
 }
 
 // Cross-store registration for safe circular dependency resolution
@@ -262,9 +263,32 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setChatParameters: (params) =>
-    set((state) => ({
-      chatParameters: { ...state.chatParameters, ...params },
-    })),
+    set((state) => {
+      const merged = { ...state.chatParameters, ...params };
+      // Safety: clamp contextWindow and maxTokens to prevent OOM on Ollama CPU
+      const safeMerged = {
+        ...merged,
+        contextWindow: Math.max(512, Math.min(merged.contextWindow ?? DEFAULT_CHAT_PARAMETERS.contextWindow, 65536)),
+        maxTokens: Math.max(1, Math.min(merged.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens, 32768)),
+        temperature: Math.max(0, Math.min(merged.temperature ?? DEFAULT_CHAT_PARAMETERS.temperature, 2)),
+        topP: Math.max(0, Math.min(merged.topP ?? DEFAULT_CHAT_PARAMETERS.topP, 1)),
+      };
+      return { chatParameters: safeMerged };
+    }),
+
+  // Async version of setChatParameters that also persists to the active conversation in storage
+  saveChatParameters: async (params) => {
+    const { activeConversationId, activeConversation } = get();
+    // Apply clamping via the sync setter first
+    get().setChatParameters(params);
+    const updatedParams = get().chatParameters;
+    // Persist to the active conversation so params survive page refresh
+    if (activeConversationId && activeConversation) {
+      const updatedConv = { ...activeConversation, parameters: updatedParams, updatedAt: Date.now() };
+      set({ activeConversation: updatedConv });
+      await storage.saveConversation(updatedConv);
+    }
+  },
 
   setModelSelectorOpen: (open) => set({ isModelSelectorOpen: open }),
   setChatSettingsOpen: (open) => set({ isChatSettingsOpen: open }),
@@ -423,7 +447,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       isCustomTitle,
       providerId: chosenProviderId,
       modelId: chosenModelId,
-      parameters: { ...chatParameters },
+      // New chats always start with safe defaults — never inherit from an existing chat's custom params
+      parameters: { ...DEFAULT_CHAT_PARAMETERS },
       isPinned: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -528,7 +553,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       : null;
     set({
       conversations,
-      ...(activeConversationId ? { activeConversation: updatedActive } : {}),
+      ...(activeConversationId && updatedActive ? {
+        activeConversation: updatedActive,
+        // Keep chatParameters in sync with the (now sanitized) conversation params
+        chatParameters: updatedActive.parameters || get().chatParameters,
+      } : {}),
     });
   },
 }));

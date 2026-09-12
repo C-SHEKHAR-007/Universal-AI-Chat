@@ -100,7 +100,7 @@ export class OpenAICompatibleProvider implements AIProvider {
         name: m.id,
         providerId: this.config.id,
         providerType: this.config.type,
-        contextLength: DEFAULT_CHAT_PARAMETERS.contextWindow,
+        // Don't assign a fixed contextLength — we don't know the real limit from the API
       }));
     } catch (err) {
       console.warn('OpenAI compatible getModels error:', err);
@@ -138,12 +138,17 @@ export class OpenAICompatibleProvider implements AIProvider {
       }
     }
 
+    const rawMaxTokens = parameters?.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens;
+
     const payload = {
       model: modelId,
       messages: formattedMessages,
       temperature: parameters?.temperature ?? DEFAULT_CHAT_PARAMETERS.temperature,
       top_p: parameters?.topP ?? DEFAULT_CHAT_PARAMETERS.topP,
-      max_tokens: parameters?.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens,
+      // Validate max_tokens: guard against NaN, 0, or negative values from corrupt params
+      max_tokens: Number.isFinite(rawMaxTokens) && rawMaxTokens > 0
+        ? Math.min(rawMaxTokens, 32768)
+        : DEFAULT_CHAT_PARAMETERS.maxTokens,
       stream: true,
       stream_options: {
         include_usage: true,
