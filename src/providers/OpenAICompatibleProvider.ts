@@ -10,6 +10,7 @@ import {
   MessageTelemetry,
   ModelMeta,
 } from '../types';
+import { PROVIDER_ENDPOINTS, DEFAULT_CHAT_PARAMETERS } from '../constants';
 
 export class OpenAICompatibleProvider implements AIProvider {
   config: AIProviderConfig;
@@ -51,7 +52,7 @@ export class OpenAICompatibleProvider implements AIProvider {
   async testConnection(): Promise<ConnectionTestResult> {
     const startTime = Date.now();
     try {
-      const response = await fetch(this.getEndpointUrl('/v1/models'), {
+      const response = await fetch(this.getEndpointUrl(PROVIDER_ENDPOINTS.OPENAI_MODELS), {
         method: 'GET',
         headers: this.getHeaders(),
       });
@@ -84,7 +85,7 @@ export class OpenAICompatibleProvider implements AIProvider {
 
   async getModels(): Promise<ModelMeta[]> {
     try {
-      const response = await fetch(this.getEndpointUrl('/v1/models'), {
+      const response = await fetch(this.getEndpointUrl(PROVIDER_ENDPOINTS.OPENAI_MODELS), {
         headers: this.getHeaders(),
       });
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
@@ -99,7 +100,7 @@ export class OpenAICompatibleProvider implements AIProvider {
         name: m.id,
         providerId: this.config.id,
         providerType: this.config.type,
-        contextLength: 16384,
+        contextLength: DEFAULT_CHAT_PARAMETERS.contextWindow,
       }));
     } catch (err) {
       console.warn('OpenAI compatible getModels error:', err);
@@ -140,16 +141,16 @@ export class OpenAICompatibleProvider implements AIProvider {
     const payload = {
       model: modelId,
       messages: formattedMessages,
-      temperature: parameters?.temperature ?? 0.7,
-      top_p: parameters?.topP ?? 0.9,
-      max_tokens: parameters?.maxTokens ?? 4096,
+      temperature: parameters?.temperature ?? DEFAULT_CHAT_PARAMETERS.temperature,
+      top_p: parameters?.topP ?? DEFAULT_CHAT_PARAMETERS.topP,
+      max_tokens: parameters?.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens,
       stream: true,
       stream_options: {
         include_usage: true,
       },
     };
 
-    const endpoint = this.config.customChatEndpoint?.trim() || '/v1/chat/completions';
+    const endpoint = this.config.customChatEndpoint?.trim() || PROVIDER_ENDPOINTS.OPENAI_CHAT;
     const chatUrl = this.getEndpointUrl(endpoint);
 
     const response = await fetch(chatUrl, {

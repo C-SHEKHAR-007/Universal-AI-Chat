@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Activity, Zap, Clock, Cpu, Play, BarChart3 } from 'lucide-react-native';
 import { spacing, typography, borderRadius } from '../theme/tokens';
@@ -15,9 +16,28 @@ import { useAppStore } from '../store/appStore';
 import { storage } from '../storage/storageAdapter';
 import { BenchmarkRun } from '../types';
 import { ProviderFactory } from '../providers/providerFactory';
+import {
+  BENCHMARK_TEST_PROMPT,
+  BENCHMARK_TEST_PARAMETERS,
+  DEFAULT_BENCHMARKS,
+} from '../constants';
+import { useResponsive } from '../hooks/useResponsive';
+
+const formatTimeAgo = (timestamp?: number) => {
+  if (!timestamp) return '';
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return 'Just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
 
 export const PerformanceScreen: React.FC = () => {
   const { colors } = useTheme();
+  const { isPhone } = useResponsive();
   const { activeModelId, activeProviderId, providers } = useAppStore();
   const [benchmarks, setBenchmarks] = useState<BenchmarkRun[]>([]);
   const [isRunningBench, setIsRunningBench] = useState(false);
@@ -40,7 +60,7 @@ export const PerformanceScreen: React.FC = () => {
   const handleRunBenchmark = async () => {
     setIsRunningBench(true);
     const startTime = Date.now();
-    const prompt = 'Explain quantum computing in 2 paragraphs.';
+    const prompt = BENCHMARK_TEST_PROMPT;
 
     try {
       if (currentProvider) {
@@ -51,7 +71,7 @@ export const PerformanceScreen: React.FC = () => {
         const telemetry = await provider.streamChat(
           [{ id: 'bench_prompt', conversationId: 'bench', role: 'user', content: prompt, createdAt: Date.now() }],
           activeModelId,
-          { temperature: 0.7, topP: 0.9, maxTokens: 250, contextWindow: 4096, systemPrompt: '' },
+          BENCHMARK_TEST_PARAMETERS,
           {
             onFirstToken: (ttft) => {
               firstTokenTime = ttft;
@@ -100,12 +120,15 @@ export const PerformanceScreen: React.FC = () => {
     }
   };
 
-  const heroSpeed = activeMetric?.tokensPerSec || 11.6;
-  const ttftSec = ((activeMetric?.ttftMs || 1210) / 1000).toFixed(2);
-  const genSec = ((activeMetric?.generationTimeMs || 18420) / 1000).toFixed(2);
-  const inTokens = activeMetric?.promptTokens || 524;
-  const outTokens = activeMetric?.completionTokens || 214;
+  const fallbackBench = DEFAULT_BENCHMARKS[0];
+  const heroSpeed = activeMetric?.tokensPerSec ?? fallbackBench?.tokensPerSec ?? 0;
+  const ttftSec = (((activeMetric?.ttftMs ?? fallbackBench?.ttftMs ?? 0)) / 1000).toFixed(2);
+  const genSec = (((activeMetric?.generationTimeMs ?? fallbackBench?.generationTimeMs ?? 0)) / 1000).toFixed(2);
+  const inTokens = activeMetric?.promptTokens ?? fallbackBench?.promptTokens ?? 0;
+  const outTokens = activeMetric?.completionTokens ?? fallbackBench?.completionTokens ?? 0;
   const totalTokens = inTokens + outTokens;
+
+  const displayBenchmarks = useMemo(() => benchmarks.slice(0, 15), [benchmarks]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -176,41 +199,167 @@ export const PerformanceScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Benchmark History Table */}
+        {/* Benchmark History Section */}
         <View style={[styles.historyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.historyHeader}>
-            <BarChart3 color={colors.primary} size={18} />
-            <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Benchmark History</Text>
+            <View style={styles.historyHeaderTitleRow}>
+              <BarChart3 color={colors.primary} size={18} />
+              <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Benchmark History</Text>
+            </View>
+            <View style={[styles.runCountBadge, { backgroundColor: colors.backgroundSecondary, borderColor: colors.borderLight }]}>
+              <Text style={[styles.runCountText, { color: colors.textSecondary }]}>
+                {benchmarks.length} runs
+              </Text>
+            </View>
           </View>
 
-          <View style={[styles.tableHeader, { borderBottomColor: colors.borderLight }]}>
-            <Text style={[styles.th, { flex: 2, color: colors.textMuted }]}>MODEL</Text>
-            <Text style={[styles.th, { flex: 1, textAlign: 'right', color: colors.textMuted }]}>TOK/S</Text>
-            <Text style={[styles.th, { flex: 1, textAlign: 'right', color: colors.textMuted }]}>TTFT</Text>
-          </View>
+          {benchmarks.length === 0 ? (
+            <View style={styles.emptyHistory}>
+              <Text style={[styles.emptyHistoryText, { color: colors.textMuted }]}>
+                No benchmark runs recorded yet.
+              </Text>
+            </View>
+          ) : isPhone ? (
+            /* Mobile Card-Based Enhanced Layout */
+            <View style={styles.mobileHistoryList}>
+              {displayBenchmarks.map((item) => {
+                const isSelected = activeMetric?.id === item.id;
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.mobileRunCard,
+                      {
+                        backgroundColor: colors.backgroundSecondary,
+                        borderColor: isSelected ? colors.primary : colors.borderLight,
+                      },
+                      isSelected && [
+                        styles.mobileRunCardActive,
+                        {
+                          backgroundColor: colors.primaryMuted,
+                          borderLeftColor: colors.primary,
+                        },
+                      ],
+                    ]}
+                    onPress={() => setActiveMetric(item)}
+                    activeOpacity={0.7}
+                  >
+                    {/* Top row: Model info & Speed badge */}
+                    <View style={styles.mobileCardTop}>
+                      <View style={styles.mobileModelRow}>
+                        <Cpu size={14} color={isSelected ? colors.primary : colors.textSecondary} />
+                        <Text
+                          style={[
+                            styles.mobileModelName,
+                            { color: colors.textPrimary },
+                            isSelected && { fontWeight: typography.weight.bold },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {item.modelId}
+                        </Text>
+                      </View>
+                      <View style={[styles.speedBadge, { backgroundColor: colors.successLight }]}>
+                        <Zap size={11} color={colors.success} fill={colors.success} />
+                        <Text style={[styles.speedBadgeText, { color: colors.success }]}>
+                          {item.tokensPerSec} tok/s
+                        </Text>
+                      </View>
+                    </View>
 
-          {benchmarks.slice(0, 10).map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[
-                styles.tableRow,
-                { borderBottomColor: colors.borderLight },
-                activeMetric?.id === item.id && { backgroundColor: colors.primaryMuted },
-              ]}
-              onPress={() => setActiveMetric(item)}
-            >
-              <View style={{ flex: 2 }}>
-                <Text style={[styles.tableModelName, { color: colors.textPrimary }]}>{item.modelId}</Text>
-                <Text style={[styles.tableProvName, { color: colors.textMuted }]}>{item.providerName}</Text>
+                    {/* Bottom row: Provider chip, TTFT pill, and relative time */}
+                    <View style={styles.mobileCardBottom}>
+                      <View style={styles.mobileCardMetaLeft}>
+                        <View style={[styles.provChip, { backgroundColor: colors.card, borderColor: colors.borderLight }]}>
+                          <Text style={[styles.provChipText, { color: colors.textSecondary }]}>
+                            {item.providerName}
+                          </Text>
+                        </View>
+                        <View style={styles.ttftPill}>
+                          <Clock size={11} color={colors.textMuted} />
+                          <Text style={[styles.ttftPillText, { color: colors.textSecondary }]}>
+                            {(item.ttftMs / 1000).toFixed(2)}s TTFT
+                          </Text>
+                        </View>
+                      </View>
+                      {item.createdAt ? (
+                        <Text style={[styles.mobileTimeAgo, { color: colors.textMuted }]}>
+                          {formatTimeAgo(item.createdAt)}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            /* Tablet/Desktop Table Layout */
+            <View style={styles.tableContainer}>
+              <View style={[styles.tableHeader, { borderBottomColor: colors.borderLight }]}>
+                <Text style={[styles.th, { flex: 2.2, color: colors.textMuted }]}>MODEL & PROVIDER</Text>
+                <Text style={[styles.th, { flex: 1.2, textAlign: 'right', color: colors.textMuted }]}>SPEED</Text>
+                <Text style={[styles.th, { flex: 1, textAlign: 'right', color: colors.textMuted }]}>TTFT</Text>
+                <Text style={[styles.th, { flex: 1, textAlign: 'right', color: colors.textMuted }]}>TIME</Text>
               </View>
-              <Text style={[styles.tableSpeed, { flex: 1, textAlign: 'right', color: colors.success }]}>
-                {item.tokensPerSec}
-              </Text>
-              <Text style={[styles.tableTtft, { flex: 1, textAlign: 'right', color: colors.textSecondary }]}>
-                {(item.ttftMs / 1000).toFixed(2)}s
-              </Text>
-            </TouchableOpacity>
-          ))}
+
+              {displayBenchmarks.map((item) => {
+                const isSelected = activeMetric?.id === item.id;
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.tableRow,
+                      {
+                        borderBottomColor: isSelected ? 'transparent' : colors.borderLight,
+                        borderBottomWidth: isSelected ? 0 : 1,
+                      },
+                      isSelected && [
+                        styles.tableRowSelected,
+                        {
+                          backgroundColor: colors.primaryMuted,
+                          borderLeftColor: colors.primary,
+                        },
+                      ],
+                    ]}
+                    onPress={() => setActiveMetric(item)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flex: 2.2, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View
+                        style={[
+                          styles.tableIconCircle,
+                          { backgroundColor: colors.backgroundSecondary },
+                          isSelected && { backgroundColor: colors.primaryMuted },
+                        ]}
+                      >
+                        <Cpu size={13} color={isSelected ? colors.primary : colors.textSecondary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.tableModelName, { color: colors.textPrimary }]} numberOfLines={1}>
+                          {item.modelId}
+                        </Text>
+                        <Text style={[styles.tableProvName, { color: colors.textMuted }]}>{item.providerName}</Text>
+                      </View>
+                    </View>
+                    <View style={{ flex: 1.2, alignItems: 'flex-end' }}>
+                      <View style={[styles.speedBadge, { backgroundColor: colors.successLight }]}>
+                        <Zap size={11} color={colors.success} fill={colors.success} />
+                        <Text style={[styles.speedBadgeText, { color: colors.success }]}>
+                          {item.tokensPerSec} tok/s
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.tableTtft, { flex: 1, textAlign: 'right', color: colors.textSecondary }]}>
+                      {(item.ttftMs / 1000).toFixed(2)}s
+                    </Text>
+                    <Text style={[styles.tableTimeAgo, { flex: 1, textAlign: 'right', color: colors.textMuted }]}>
+                      {formatTimeAgo(item.createdAt)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -332,17 +481,118 @@ const styles = StyleSheet.create({
   historyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'space-between',
     marginBottom: spacing.md,
+  },
+  historyHeaderTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   historyTitle: {
     fontSize: typography.size.md,
     fontWeight: typography.weight.bold,
   },
+  runCountBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  runCountText: {
+    fontSize: 11,
+    fontWeight: typography.weight.medium,
+  },
+  emptyHistory: {
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+  },
+  emptyHistoryText: {
+    fontSize: typography.size.sm,
+  },
+  // Mobile Card Styles
+  mobileHistoryList: {
+    gap: spacing.sm,
+  },
+  mobileRunCard: {
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    gap: 8,
+  },
+  mobileRunCardActive: {
+    borderLeftWidth: 4,
+  },
+  mobileCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  mobileModelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  mobileModelName: {
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.semibold,
+  },
+  speedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  speedBadgeText: {
+    fontSize: 11,
+    fontWeight: typography.weight.bold,
+  },
+  mobileCardBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  mobileCardMetaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  provChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+  },
+  provChipText: {
+    fontSize: 10,
+    fontWeight: typography.weight.medium,
+  },
+  ttftPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ttftPillText: {
+    fontSize: 11,
+  },
+  mobileTimeAgo: {
+    fontSize: 11,
+  },
+  // Tablet/Desktop Table Styles
+  tableContainer: {
+    width: '100%',
+  },
   tableHeader: {
     flexDirection: 'row',
-    paddingVertical: 8,
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
+    marginBottom: 4,
   },
   th: {
     fontSize: 11,
@@ -352,8 +602,20 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginVertical: 2,
+  },
+  tableRowSelected: {
+    borderLeftWidth: 3,
+  },
+  tableIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tableModelName: {
     fontSize: typography.size.xs,
@@ -362,11 +624,10 @@ const styles = StyleSheet.create({
   tableProvName: {
     fontSize: 10,
   },
-  tableSpeed: {
-    fontSize: typography.size.xs,
-    fontWeight: typography.weight.bold,
-  },
   tableTtft: {
     fontSize: typography.size.xs,
+  },
+  tableTimeAgo: {
+    fontSize: 11,
   },
 });

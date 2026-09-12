@@ -1,10 +1,11 @@
+import { DEFAULT_CHAT_TITLE, TITLE_GENERATION_CONFIG } from '../constants';
+
 /**
  * Utility to auto-generate concise, ChatGPT-style conversation titles
  * from the user's initial prompt.
  */
-
 export function generateChatTitle(prompt: string): string {
-  if (!prompt || typeof prompt !== 'string') return 'New Chat';
+  if (!prompt || typeof prompt !== 'string') return DEFAULT_CHAT_TITLE;
 
   // 1. Strip code blocks and raw markdown symbols
   let clean = prompt
@@ -14,7 +15,7 @@ export function generateChatTitle(prompt: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 
-  if (!clean) return 'New Chat';
+  if (!clean) return DEFAULT_CHAT_TITLE;
 
   // 2. Strip conversational filler prefixes
   const fillerPrefixes = [
@@ -41,22 +42,22 @@ export function generateChatTitle(prompt: string): string {
   const firstClause = clean.split(/[.?!:\n;]/)[0].trim();
   const words = firstClause.split(/\s+/).filter(Boolean);
 
-  if (words.length === 0) return 'New Chat';
+  if (words.length === 0) return DEFAULT_CHAT_TITLE;
 
-  // 4. Take up to 5-6 words or ~36 characters
-  let selectedWords = words.slice(0, 5);
+  // 4. Take up to 5-6 words or max characters
+  let selectedWords = words.slice(0, TITLE_GENERATION_CONFIG.MAX_WORDS);
   let candidate = selectedWords.join(' ');
 
-  if (candidate.length > 36) {
-    candidate = candidate.slice(0, 36).trim();
+  if (candidate.length > TITLE_GENERATION_CONFIG.MAX_CHAR_LENGTH) {
+    candidate = candidate.slice(0, TITLE_GENERATION_CONFIG.MAX_CHAR_LENGTH).trim();
     const lastSpace = candidate.lastIndexOf(' ');
-    if (lastSpace > 12) {
+    if (lastSpace > TITLE_GENERATION_CONFIG.MIN_BACKSPACE_CUT) {
       candidate = candidate.slice(0, lastSpace);
     }
   }
 
   // 5. Title Case formatting (preserving lowercase for minor conjunctions/prepositions)
-  const minorWords = new Set(['a', 'an', 'the', 'in', 'on', 'of', 'for', 'to', 'and', 'with', 'by', 'at', 'from']);
+  const minorWords = new Set<string>(TITLE_GENERATION_CONFIG.MINOR_WORDS);
   const titleCased = candidate
     .split(' ')
     .map((word, idx) => {
@@ -72,5 +73,5 @@ export function generateChatTitle(prompt: string): string {
     })
     .join(' ');
 
-  return titleCased || 'New Chat';
+  return titleCased || DEFAULT_CHAT_TITLE;
 }

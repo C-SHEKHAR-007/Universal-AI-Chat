@@ -16,6 +16,15 @@ import { useAppStore } from '../../store/appStore';
 import { ProviderType, AIProviderConfig } from '../../types';
 import { ProviderFactory } from '../../providers/providerFactory';
 import { storage } from '../../storage/storageAdapter';
+import {
+  DEFAULT_OLLAMA_URL,
+  DEFAULT_OLLAMA_LAN_URL,
+  DEFAULT_OPENAI_URL,
+  DEFAULT_CUSTOM_CHAT_ENDPOINT,
+  PROVIDER_PRESETS,
+  PROVIDER_TYPE_OPTIONS,
+  DEFAULT_MODELS,
+} from '../../constants';
 
 export const AddProviderModal: React.FC = () => {
   const { colors } = useTheme();
@@ -23,9 +32,9 @@ export const AddProviderModal: React.FC = () => {
 
   const [type, setType] = useState<ProviderType>('ollama');
   const [name, setName] = useState('');
-  const [baseUrl, setBaseUrl] = useState('http://localhost:11434');
+  const [baseUrl, setBaseUrl] = useState(DEFAULT_OLLAMA_URL);
   const [apiKey, setApiKey] = useState('');
-  const [customEndpoint, setCustomEndpoint] = useState('/v1/chat/completions');
+  const [customEndpoint, setCustomEndpoint] = useState(DEFAULT_CUSTOM_CHAT_ENDPOINT);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latency?: number } | null>(null);
 
@@ -35,16 +44,16 @@ export const AddProviderModal: React.FC = () => {
       if (editingProvider) {
         setType(editingProvider.type || 'ollama');
         setName(editingProvider.name || '');
-        setBaseUrl(editingProvider.baseUrl || 'http://localhost:11434');
+        setBaseUrl(editingProvider.baseUrl || DEFAULT_OLLAMA_URL);
         setApiKey(editingProvider.apiKey || '');
-        setCustomEndpoint(editingProvider.customChatEndpoint || '/v1/chat/completions');
+        setCustomEndpoint(editingProvider.customChatEndpoint || DEFAULT_CUSTOM_CHAT_ENDPOINT);
       } else {
         // Fresh "Add New" — clear all fields
         setType('ollama');
         setName('');
-        setBaseUrl('http://localhost:11434');
+        setBaseUrl(DEFAULT_OLLAMA_URL);
         setApiKey('');
-        setCustomEndpoint('/v1/chat/completions');
+        setCustomEndpoint(DEFAULT_CUSTOM_CHAT_ENDPOINT);
       }
       setIsTesting(false);
       setTestResult(null);
@@ -89,7 +98,7 @@ export const AddProviderModal: React.FC = () => {
 
   const handleSave = async () => {
     const finalName = name.trim() || (type === 'ollama' ? 'Local Ollama' : 'OpenAI Compatible');
-    const finalUrl = baseUrl.trim() || 'http://localhost:11434';
+    const finalUrl = baseUrl.trim() || DEFAULT_OLLAMA_URL;
 
     const newProvider: AIProviderConfig = {
       id: editingProvider?.id || 'prov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -120,15 +129,14 @@ export const AddProviderModal: React.FC = () => {
 
     // If OpenRouter, seed a default free model
     if (finalUrl.includes('openrouter')) {
-      useAppStore.getState().addCustomModel({
-        id: 'nvidia/nemotron-3.5-lightning:free',
-        name: 'nvidia/nemotron-3.5-lightning:free',
-        providerId: newProvider.id,
-        providerType: 'openai_compatible',
-        contextLength: 1000000,
-        parameterSize: 'Free 1M',
-      });
-      useAppStore.getState().setActiveModelId('nvidia/nemotron-3.5-lightning:free', newProvider.id);
+      const defaultNemotron = DEFAULT_MODELS.find((m) => m.id.includes('nemotron'));
+      if (defaultNemotron) {
+        useAppStore.getState().addCustomModel({
+          ...defaultNemotron,
+          providerId: newProvider.id,
+        });
+        useAppStore.getState().setActiveModelId(defaultNemotron.id, newProvider.id);
+      }
     }
 
     setAddProviderOpen(false);
@@ -167,15 +175,11 @@ export const AddProviderModal: React.FC = () => {
             {/* Provider Type Radio Options */}
             <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Provider Type</Text>
             <View style={styles.typeRow}>
-              {[
-                { id: 'ollama' as ProviderType, label: 'Ollama' },
-                { id: 'openai_compatible' as ProviderType, label: 'OpenAI Compatible' },
-                { id: 'custom' as ProviderType, label: 'Custom API' },
-              ].map((item) => {
-                const isSelected = type === item.id;
+              {PROVIDER_TYPE_OPTIONS.map((item) => {
+                const isSelected = type === item.type;
                 return (
                   <TouchableOpacity
-                    key={item.id}
+                    key={item.type}
                     style={[
                       styles.typeOption,
                       {
@@ -185,11 +189,11 @@ export const AddProviderModal: React.FC = () => {
                       isSelected && { backgroundColor: colors.primaryMuted },
                     ]}
                     onPress={() => {
-                      setType(item.id);
-                      if (item.id === 'ollama' && (!baseUrl || baseUrl.includes('openai'))) {
-                        setBaseUrl('http://localhost:11434');
-                      } else if (item.id !== 'ollama' && baseUrl.includes('11434')) {
-                        setBaseUrl('https://api.openai.com');
+                      setType(item.type);
+                      if (item.type === 'ollama' && (!baseUrl || baseUrl.includes('openai'))) {
+                        setBaseUrl(DEFAULT_OLLAMA_URL);
+                      } else if (item.type !== 'ollama' && baseUrl.includes('11434')) {
+                        setBaseUrl(DEFAULT_OPENAI_URL);
                       }
                     }}
                   >
@@ -222,12 +226,7 @@ export const AddProviderModal: React.FC = () => {
                   Quick Fill Preset:
                 </Text>
                 <View style={styles.presetChipsRow}>
-                  {[
-                    { label: '⚡ OpenRouter', name: 'OpenRouter', url: 'https://openrouter.ai/api/v1' },
-                    { label: 'Groq', name: 'Groq', url: 'https://api.groq.com/openai/v1' },
-                    { label: 'DeepSeek', name: 'DeepSeek', url: 'https://api.deepseek.com' },
-                    { label: 'OpenAI', name: 'OpenAI', url: 'https://api.openai.com' },
-                  ].map((preset) => {
+                  {PROVIDER_PRESETS.map((preset) => {
                     const isPicked = baseUrl === preset.url;
                     return (
                       <TouchableOpacity
@@ -290,7 +289,7 @@ export const AddProviderModal: React.FC = () => {
                     color: colors.textPrimary,
                   },
                 ]}
-                placeholder="http://192.168.1.20:11434"
+                placeholder={DEFAULT_OLLAMA_LAN_URL}
                 placeholderTextColor={colors.textMuted}
                 value={baseUrl}
                 onChangeText={setBaseUrl}
@@ -335,7 +334,7 @@ export const AddProviderModal: React.FC = () => {
                       color: colors.textPrimary,
                     },
                   ]}
-                  placeholder="/v1/chat/completions"
+                  placeholder={DEFAULT_CUSTOM_CHAT_ENDPOINT}
                   placeholderTextColor={colors.textMuted}
                   value={customEndpoint}
                   onChangeText={setCustomEndpoint}

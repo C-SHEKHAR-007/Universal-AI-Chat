@@ -14,6 +14,7 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/appStore';
 import { ProviderFactory } from '../../providers/providerFactory';
 import { ModelMeta } from '../../types';
+import { DEFAULT_CUSTOM_MODEL_CONTEXT_LENGTH } from '../../constants';
 
 export const ModelSelectorModal: React.FC = () => {
   const { colors } = useTheme();
@@ -89,7 +90,7 @@ export const ModelSelectorModal: React.FC = () => {
       name: trimmed,
       providerId: selectedProviderId,
       providerType: currentProvider?.type || 'openai_compatible',
-      contextLength: 100000,
+      contextLength: DEFAULT_CUSTOM_MODEL_CONTEXT_LENGTH,
     };
     addCustomModel(customModel);
     setActiveModelId(trimmed, selectedProviderId);

@@ -5,38 +5,29 @@ import { spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/appStore';
 import { ActiveTab } from '../../types';
+import { NAVIGATION_TABS } from '../../constants';
 
 export const BottomTabBar: React.FC = () => {
   const { colors } = useTheme();
   const { activeTab, setActiveTab } = useAppStore();
 
-  const tabs: Array<{ id: ActiveTab; label: string; icon: React.ReactNode }> = [
-    {
-      id: 'chat',
-      label: 'Chat',
-      icon: <MessageSquare size={20} color={activeTab === 'chat' ? colors.primary : colors.textMuted} />,
-    },
-    {
-      id: 'conversations',
-      label: 'Conversations',
-      icon: <Library size={20} color={activeTab === 'conversations' ? colors.primary : colors.textMuted} />,
-    },
-    {
-      id: 'models',
-      label: 'Providers',
-      icon: <Cpu size={20} color={activeTab === 'models' ? colors.primary : colors.textMuted} />,
-    },
-    {
-      id: 'performance',
-      label: 'Performance',
-      icon: <Activity size={20} color={activeTab === 'performance' ? colors.primary : colors.textMuted} />,
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: <Settings size={20} color={activeTab === 'settings' ? colors.primary : colors.textMuted} />,
-    },
-  ];
+  const renderTabIcon = (tabId: ActiveTab, isActive: boolean) => {
+    const iconColor = isActive ? colors.primary : colors.textMuted;
+    switch (tabId) {
+      case 'chat':
+        return <MessageSquare size={20} color={iconColor} />;
+      case 'conversations':
+        return <Library size={20} color={iconColor} />;
+      case 'models':
+        return <Cpu size={20} color={iconColor} />;
+      case 'performance':
+        return <Activity size={20} color={iconColor} />;
+      case 'settings':
+        return <Settings size={20} color={iconColor} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <View
@@ -48,16 +39,16 @@ export const BottomTabBar: React.FC = () => {
         },
       ]}
     >
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.id;
+      {NAVIGATION_TABS.map((tab) => {
+        const isActive = activeTab === tab.key;
         return (
           <TouchableOpacity
-            key={tab.id}
+            key={tab.key}
             style={styles.tabItem}
-            onPress={() => setActiveTab(tab.id)}
+            onPress={() => setActiveTab(tab.key)}
             activeOpacity={0.7}
           >
-            {tab.icon}
+            {renderTabIcon(tab.key, isActive)}
             <Text
               style={[
                 styles.tabLabel,

@@ -1,6 +1,18 @@
 import { create } from 'zustand';
 import { ActiveTab, AIProviderConfig, ModelMeta, Conversation, ChatParameters } from '../types';
-import { storage, DEFAULT_PARAMETERS, DEFAULT_PROVIDERS } from '../storage/storageAdapter';
+import { storage } from '../storage/storageAdapter';
+import {
+  DEFAULT_THEME,
+  DEFAULT_ACTIVE_TAB,
+  DEFAULT_PROVIDERS,
+  DEFAULT_PROVIDER_ID,
+  DEFAULT_MODEL_ID,
+  DEFAULT_MODELS,
+  DEFAULT_PARAMETERS,
+  DEFAULT_CHAT_TITLE,
+  UNTITLED_CHAT_TITLE,
+  PROVIDER_DEFAULT_MODEL_IDS,
+} from '../constants';
 import { pushConversationToUrl, replaceConversationInUrl } from '../utils/urlSync';
 import { ProviderFactory } from '../providers/providerFactory';
 
@@ -62,60 +74,19 @@ export const registerChatStore = (store: any) => {
 export const getChatStore = () => chatStoreRef;
 
 export const useAppStore = create<AppState>((set, get) => ({
-  theme: 'dark',
-  activeTab: 'chat',
+  theme: DEFAULT_THEME,
+  activeTab: DEFAULT_ACTIVE_TAB,
   isDrawerOpen: false,
   activeConversationId: null,
   activeConversation: null,
-  activeProviderId: DEFAULT_PROVIDERS[0].id,
-  activeModelId: 'qwen3:8b',
-  defaultProviderId: DEFAULT_PROVIDERS[0].id,
-  defaultModelId: 'qwen3:8b',
+  activeProviderId: DEFAULT_PROVIDER_ID,
+  activeModelId: DEFAULT_MODEL_ID,
+  defaultProviderId: DEFAULT_PROVIDER_ID,
+  defaultModelId: DEFAULT_MODEL_ID,
   chatParameters: { ...DEFAULT_PARAMETERS },
   conversations: [],
   providers: DEFAULT_PROVIDERS,
-  models: [
-    {
-      id: 'qwen3:8b',
-      name: 'qwen3:8b',
-      providerId: DEFAULT_PROVIDERS[0].id,
-      providerType: 'ollama',
-      parameterSize: '8.2B',
-      fileSizeFormatted: '5.2 GB',
-      avgSpeedTokPerSec: 12.4,
-      contextLength: 40960,
-    },
-    {
-      id: 'phi3:latest',
-      name: 'phi3:latest',
-      providerId: DEFAULT_PROVIDERS[0].id,
-      providerType: 'ollama',
-      parameterSize: '3.8B',
-      fileSizeFormatted: '2.2 GB',
-      avgSpeedTokPerSec: 18.5,
-      contextLength: 131072,
-    },
-    {
-      id: 'gemma3:270m',
-      name: 'gemma3:270m',
-      providerId: DEFAULT_PROVIDERS[0].id,
-      providerType: 'ollama',
-      parameterSize: '268M',
-      fileSizeFormatted: '291 MB',
-      avgSpeedTokPerSec: 32.0,
-      contextLength: 32768,
-    },
-    {
-      id: 'GPT-OSS:20B',
-      name: 'GPT-OSS:20B',
-      providerId: DEFAULT_PROVIDERS[0].id,
-      providerType: 'ollama',
-      parameterSize: '20B',
-      fileSizeFormatted: '13 GB',
-      avgSpeedTokPerSec: 4.1,
-      contextLength: 16384,
-    },
-  ],
+  models: DEFAULT_MODELS,
   isModelSelectorOpen: false,
   isChatSettingsOpen: false,
   isAddProviderOpen: false,
@@ -184,13 +155,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (providerModels.length > 0) {
         nextModelId = providerModels[0].id;
       } else if (provider?.type === 'ollama' || (!provider && id.includes('ollama'))) {
-        nextModelId = 'qwen3:8b';
+        nextModelId = PROVIDER_DEFAULT_MODEL_IDS.OLLAMA;
       } else if (provider?.baseUrl?.includes('openrouter')) {
-        nextModelId = 'nvidia/nemotron-3.5-lightning:free';
+        nextModelId = PROVIDER_DEFAULT_MODEL_IDS.OPENROUTER;
       } else if (provider?.baseUrl?.includes('groq')) {
-        nextModelId = 'llama-3.3-70b-versatile';
+        nextModelId = PROVIDER_DEFAULT_MODEL_IDS.GROQ;
       } else {
-        nextModelId = 'gpt-4o-mini';
+        nextModelId = PROVIDER_DEFAULT_MODEL_IDS.OPENAI;
       }
     }
 
@@ -243,13 +214,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (providerModels.length > 0) {
         nextModelId = providerModels[0].id;
       } else if (provider?.type === 'ollama' || (!provider && id.includes('ollama'))) {
-        nextModelId = 'qwen3:8b';
+        nextModelId = PROVIDER_DEFAULT_MODEL_IDS.OLLAMA;
       } else if (provider?.baseUrl?.includes('openrouter')) {
-        nextModelId = 'nvidia/nemotron-3.5-lightning:free';
+        nextModelId = PROVIDER_DEFAULT_MODEL_IDS.OPENROUTER;
       } else if (provider?.baseUrl?.includes('groq')) {
-        nextModelId = 'llama-3.3-70b-versatile';
+        nextModelId = PROVIDER_DEFAULT_MODEL_IDS.GROQ;
       } else {
-        nextModelId = 'gpt-4o-mini';
+        nextModelId = PROVIDER_DEFAULT_MODEL_IDS.OPENAI;
       }
     }
 
@@ -322,10 +293,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     const validModel = storedDefaultMod && (providerModels.length === 0 || providerModels.some((m) => m.id === storedDefaultMod));
     const defaultModel = validModel
       ? storedDefaultMod
-      : (providerModels[0]?.id || 'qwen3:8b');
+      : (providerModels[0]?.id || DEFAULT_MODEL_ID);
 
     set({
-      theme: savedTheme || 'dark',
+      theme: savedTheme || DEFAULT_THEME,
       providers,
       conversations,
       defaultProviderId: defaultProvider,
@@ -350,7 +321,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!providers.some((p) => p.id === defaultProviderId) && providers.length > 0) {
       newDefaultProv = providers[0].id;
       const provModels = get().models.filter((m) => m.providerId === newDefaultProv);
-      newDefaultMod = provModels[0]?.id || 'qwen3:8b';
+      newDefaultMod = provModels[0]?.id || DEFAULT_MODEL_ID;
       await storage.setDefaultProviderId(newDefaultProv);
       await storage.setDefaultModelId(newDefaultMod);
     }
@@ -358,7 +329,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!providers.some((p) => p.id === activeProviderId) && providers.length > 0) {
       newActiveProv = providers[0].id;
       const provModels = get().models.filter((m) => m.providerId === newActiveProv);
-      newActiveMod = provModels[0]?.id || 'qwen3:8b';
+      newActiveMod = provModels[0]?.id || DEFAULT_MODEL_ID;
       await storage.setActiveProviderId(newActiveProv);
       await storage.setActiveModelId(newActiveMod);
     }
@@ -385,7 +356,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (remaining.length > 0) {
       const fallback = remaining[0];
       const providerModels = get().models.filter((m) => m.providerId === fallback.id);
-      const fallbackModel = providerModels[0]?.id || 'qwen3:8b';
+      const fallbackModel = providerModels[0]?.id || DEFAULT_MODEL_ID;
 
       if (defaultProviderId === id) {
         set({ defaultProviderId: fallback.id, defaultModelId: fallbackModel });
@@ -409,7 +380,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     await get().refreshProviders();
   },
 
-  createConversation: async (title = 'New Chat', initialProviderId, initialModelId, isCustomTitle = false) => {
+  createConversation: async (title = DEFAULT_CHAT_TITLE, initialProviderId, initialModelId, isCustomTitle = false) => {
     getChatStore()?.getState().stopGeneration();
     const { defaultProviderId, defaultModelId, activeProviderId, activeModelId, chatParameters, activeConversationId } = get();
 
@@ -458,7 +429,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateConversationTitle: async (id, newTitle, isManual = true) => {
-    const trimmedTitle = newTitle.trim() || 'Untitled Chat';
+    const trimmedTitle = newTitle.trim() || UNTITLED_CHAT_TITLE;
     const convs = await storage.getConversations();
     const target = convs.find((c) => c.id === id);
     if (target) {

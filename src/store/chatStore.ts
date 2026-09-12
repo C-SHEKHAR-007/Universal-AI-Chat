@@ -5,6 +5,11 @@ import { useAppStore, registerChatStore } from './appStore';
 import { ProviderFactory } from '../providers/providerFactory';
 import { buildContextPayload } from '../utils/contextManager';
 import { generateChatTitle } from '../utils/titleGenerator';
+import {
+  FALLBACK_RESPONSE_TEXT,
+  STREAM_SNIPPET_LENGTH,
+  CONTEXT_WINDOW_CONFIG,
+} from '../constants';
 
 interface ChatState {
   messages: ChatMessage[];
@@ -237,7 +242,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         id: assistantMsgId,
         conversationId: sessionConvId,
         role: 'assistant',
-        content: streamAcc || 'No response generated.',
+        content: streamAcc || FALLBACK_RESPONSE_TEXT,
         createdAt: Date.now(),
         isStreaming: false,
         telemetry: {
@@ -267,8 +272,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         modelId: sessionModelId,
         ttftMs: telemetry.ttftMs || 0,
         generationTimeMs: telemetry.generationTimeMs || Date.now() - startTime,
-        promptTokens: telemetry.tokensIn || Math.ceil(text.split(/\s+/).length * 1.3),
-        completionTokens: telemetry.tokensOut || Math.ceil(streamAcc.split(/\s+/).length * 1.3),
+        promptTokens: telemetry.tokensIn || Math.ceil(text.split(/\s+/).length * CONTEXT_WINDOW_CONFIG.WORDS_MULTIPLIER),
+        completionTokens: telemetry.tokensOut || Math.ceil(streamAcc.split(/\s+/).length * CONTEXT_WINDOW_CONFIG.WORDS_MULTIPLIER),
         tokensPerSec: telemetry.tokensPerSec || 0,
         createdAt: Date.now(),
       };
@@ -280,7 +285,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const currentConv = convs.find((c) => c.id === sessionConvId);
       if (currentConv) {
         currentConv.updatedAt = Date.now();
-        currentConv.lastMessageSnippet = streamAcc.slice(0, 60);
+        currentConv.lastMessageSnippet = streamAcc.slice(0, STREAM_SNIPPET_LENGTH);
         currentConv.messageCount = finalMessagesList.length;
         await storage.saveConversation(currentConv);
         await appState.refreshConversations();

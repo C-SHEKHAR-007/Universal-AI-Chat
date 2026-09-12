@@ -5,6 +5,7 @@ import { spacing, typography, borderRadius } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/appStore';
 import { useResponsive } from '../../hooks/useResponsive';
+import { APP_NAME, TOOLTIP_CONFIG } from '../../constants';
 
 import { Tooltip } from './Tooltip';
 
@@ -21,7 +22,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = 'Universal AI',
+  title = APP_NAME,
   subtitle,
   showBack,
   onBack,
@@ -70,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <View style={styles.left}>
         {showBack ? (
-          <Tooltip text="Go back" delay={1000}>
+          <Tooltip text="Go back" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS}>
             <TouchableOpacity
               onPress={onBack}
               style={styles.iconButton}
@@ -81,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
             </TouchableOpacity>
           </Tooltip>
         ) : !isMasterDetailSupported ? (
-          <Tooltip text="Open menu" delay={1000}>
+          <Tooltip text="Open menu" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS}>
             <TouchableOpacity
               onPress={toggleDrawer}
               style={styles.iconButton}
@@ -112,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
                 returnKeyType="done"
                 selectTextOnFocus
               />
-              <Tooltip text="Save title" delay={1000}>
+              <Tooltip text="Save title" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS}>
                 <TouchableOpacity
                   onPress={handleSave}
                   style={[styles.actionBtn, { backgroundColor: colors.primary }]}
@@ -122,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <Check color="#fff" size={14} />
                 </TouchableOpacity>
               </Tooltip>
-              <Tooltip text="Cancel editing" delay={1000}>
+              <Tooltip text="Cancel editing" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS}>
                 <TouchableOpacity
                   onPress={handleCancel}
                   style={[styles.actionBtn, { backgroundColor: colors.backgroundSecondary }]}
@@ -171,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       <View style={styles.right}>
         {/* Quick Theme Toggle Icon directly in Header */}
-        <Tooltip text={isDark ? "Switch to light mode" : "Switch to dark mode"} delay={1000} align="right">
+        <Tooltip text={isDark ? "Switch to light mode" : "Switch to dark mode"} delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
           <TouchableOpacity
             onPress={toggleTheme}
             style={styles.iconButton}
@@ -187,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
         </Tooltip>
 
         {showNewChat && (
-          <Tooltip text="New chat" delay={1000} align="right">
+          <Tooltip text="New chat" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
             <TouchableOpacity
               onPress={onNewChat}
               style={styles.iconButton}
@@ -200,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {onOptionsPress && (
-          <Tooltip text="Context window & parameters" delay={1000} align="right">
+          <Tooltip text="Context window & parameters" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
             <TouchableOpacity
               onPress={onOptionsPress}
               style={[
@@ -224,7 +225,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {onOptionsPress && (
-          <Tooltip text="Chat settings" delay={1000} align="right">
+          <Tooltip text="Chat settings" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
             <TouchableOpacity
               onPress={onOptionsPress}
               style={styles.iconButton}

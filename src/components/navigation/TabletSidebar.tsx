@@ -31,6 +31,7 @@ import { useTheme } from '../../theme/useTheme';
 import { Tooltip } from '../common/Tooltip';
 import { useAppStore } from '../../store/appStore';
 import { useChatStore } from '../../store/chatStore';
+import { APP_NAME, TOOLTIP_CONFIG } from '../../constants';
 
 export const TabletSidebar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,7 +177,7 @@ export const TabletSidebar: React.FC = () => {
               {conv.title}
             </Text>
             <View style={styles.chatActionBtns}>
-              <Tooltip text="More options" delay={1000} align="right">
+              <Tooltip text="More options" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
                 <TouchableOpacity
                   onPress={(e) => {
                     e?.stopPropagation?.();
@@ -301,7 +302,7 @@ export const TabletSidebar: React.FC = () => {
           <View style={[styles.logoCircle, { backgroundColor: colors.primaryMuted }]}>
             <Brain color={colors.primary} size={22} />
           </View>
-          <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>Universal AI</Text>
+          <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>{APP_NAME}</Text>
         </View>
         <TouchableOpacity
           onPress={toggleTheme}

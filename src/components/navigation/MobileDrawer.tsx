@@ -32,6 +32,7 @@ import { useTheme } from '../../theme/useTheme';
 import { Tooltip } from '../common/Tooltip';
 import { useAppStore } from '../../store/appStore';
 import { useChatStore } from '../../store/chatStore';
+import { APP_NAME, APP_VERSION, TOOLTIP_CONFIG } from '../../constants';
 
 export const MobileDrawer: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -119,7 +120,7 @@ export const MobileDrawer: React.FC = () => {
             <View style={[styles.logoCircle, { backgroundColor: colors.primaryMuted }]}>
               <Brain color={colors.primary} size={22} />
             </View>
-            <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>Universal AI</Text>
+            <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>{APP_NAME}</Text>
           </View>
           <View style={styles.headerRightActions}>
             <TouchableOpacity
@@ -130,7 +131,7 @@ export const MobileDrawer: React.FC = () => {
             >
               {isDark ? <Sun color={colors.warning} size={18} /> : <Moon color={colors.primary} size={18} />}
             </TouchableOpacity>
-            <Tooltip text="Close menu" delay={1000} align="right">
+            <Tooltip text="Close menu" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
               <TouchableOpacity
                 onPress={() => setDrawerOpen(false)}
                 style={styles.closeBtn}
@@ -267,7 +268,7 @@ export const MobileDrawer: React.FC = () => {
                         {conv.title}
                       </Text>
                       <View style={styles.drawerActionBtns}>
-                        <Tooltip text="More options" delay={1000} align="right">
+                        <Tooltip text="More options" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
                           <TouchableOpacity
                             onPress={(e: any) => {
                               e?.stopPropagation?.();
@@ -415,7 +416,9 @@ export const MobileDrawer: React.FC = () => {
               {activeModelId} • {currentProvider?.name || 'Local'}
             </Text>
           </View>
-          <Text style={[styles.versionText, { color: colors.textMuted }]}>Universal AI v1.0.0</Text>
+          <Text style={[styles.versionText, { color: colors.textMuted }]}>
+            {APP_NAME} v{APP_VERSION}
+          </Text>
         </View>
       </View>
     </View>

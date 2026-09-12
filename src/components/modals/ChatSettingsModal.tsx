@@ -13,7 +13,12 @@ import { spacing, typography, borderRadius } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/appStore';
 import { useChatStore } from '../../store/chatStore';
-import { DEFAULT_PARAMETERS } from '../../storage/storageAdapter';
+import {
+  DEFAULT_PARAMETERS,
+  DEFAULT_CHAT_PARAMETERS,
+  CONTEXT_PRESET_SIZES,
+  CONTEXT_PRESET_OPTIONS,
+} from '../../constants';
 import { calculateContextMetrics } from '../../utils/contextManager';
 
 export const ChatSettingsModal: React.FC = () => {
@@ -32,11 +37,11 @@ export const ChatSettingsModal: React.FC = () => {
   const { messages } = useChatStore();
 
   const [chatTitle, setChatTitle] = useState(activeConversation?.title || '');
-  const [temp, setTemp] = useState(chatParameters.temperature);
-  const [topP, setTopP] = useState(chatParameters.topP);
-  const [maxTokens, setMaxTokens] = useState(chatParameters.maxTokens.toString());
-  const [contextWin, setContextWin] = useState(chatParameters.contextWindow.toString());
-  const [systemPrompt, setSystemPrompt] = useState(chatParameters.systemPrompt);
+  const [temp, setTemp] = useState(chatParameters?.temperature ?? DEFAULT_CHAT_PARAMETERS.temperature);
+  const [topP, setTopP] = useState(chatParameters?.topP ?? DEFAULT_CHAT_PARAMETERS.topP);
+  const [maxTokens, setMaxTokens] = useState((chatParameters?.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens).toString());
+  const [contextWin, setContextWin] = useState((chatParameters?.contextWindow ?? DEFAULT_CHAT_PARAMETERS.contextWindow).toString());
+  const [systemPrompt, setSystemPrompt] = useState(chatParameters?.systemPrompt ?? DEFAULT_CHAT_PARAMETERS.systemPrompt);
 
   useEffect(() => {
     if (activeConversation) {
@@ -44,9 +49,19 @@ export const ChatSettingsModal: React.FC = () => {
     }
   }, [activeConversation?.title]);
 
+  useEffect(() => {
+    if (isChatSettingsOpen && chatParameters) {
+      setTemp(chatParameters.temperature ?? DEFAULT_CHAT_PARAMETERS.temperature);
+      setTopP(chatParameters.topP ?? DEFAULT_CHAT_PARAMETERS.topP);
+      setMaxTokens((chatParameters.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens).toString());
+      setContextWin((chatParameters.contextWindow ?? DEFAULT_CHAT_PARAMETERS.contextWindow).toString());
+      setSystemPrompt(chatParameters.systemPrompt ?? DEFAULT_CHAT_PARAMETERS.systemPrompt);
+    }
+  }, [isChatSettingsOpen, chatParameters]);
+
   if (!isChatSettingsOpen) return null;
 
-  const currentCtxLimit = parseInt(contextWin, 10) || 8192;
+  const currentCtxLimit = parseInt(contextWin, 10) || DEFAULT_CHAT_PARAMETERS.contextWindow;
   const metrics = calculateContextMetrics(messages, {
     ...chatParameters,
     contextWindow: currentCtxLimit,
@@ -60,8 +75,8 @@ export const ChatSettingsModal: React.FC = () => {
     setChatParameters({
       temperature: temp,
       topP,
-      maxTokens: parseInt(maxTokens, 10) || 4096,
-      contextWindow: parseInt(contextWin, 10) || 8192,
+      maxTokens: parseInt(maxTokens, 10) || DEFAULT_PARAMETERS.maxTokens,
+      contextWindow: currentCtxLimit,
       systemPrompt,
     });
     setChatSettingsOpen(false);
@@ -73,6 +88,13 @@ export const ChatSettingsModal: React.FC = () => {
     setMaxTokens(DEFAULT_PARAMETERS.maxTokens.toString());
     setContextWin(DEFAULT_PARAMETERS.contextWindow.toString());
     setSystemPrompt(DEFAULT_PARAMETERS.systemPrompt);
+  };
+
+  const formatTokens = (tokens: number) => {
+    if (tokens >= 1000) {
+      return (tokens / 1000).toFixed(1) + 'k';
+    }
+    return tokens.toString();
   };
 
   return (
@@ -89,9 +111,9 @@ export const ChatSettingsModal: React.FC = () => {
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.headerTitleRow}>
-              <Sliders color={colors.primary} size={20} />
-              <Text style={[styles.title, { color: colors.textPrimary }]}>Chat Settings</Text>
+            <View style={styles.titleRow}>
+              <Sliders size={20} color={colors.primary} />
+              <Text style={[styles.title, { color: colors.textPrimary }]}>Chat Parameters</Text>
             </View>
             <TouchableOpacity
               onPress={() => setChatSettingsOpen(false)}
@@ -102,81 +124,79 @@ export const ChatSettingsModal: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-            {/* Chat Title */}
-            {activeConversation && (
-              <View style={styles.settingGroup}>
-                <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Chat Title</Text>
-                <TextInput
-                  style={[
-                    styles.numericInput,
-                    {
-                      backgroundColor: colors.backgroundSecondary,
-                      borderColor: colors.borderLight,
-                      color: colors.textPrimary,
-                    },
-                  ]}
-                  value={chatTitle}
-                  onChangeText={setChatTitle}
-                  placeholder="Conversation title"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
-            )}
-
-            {/* Model Card Trigger */}
+          <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {/* Conversation Title Editing */}
             <View style={styles.settingGroup}>
-              <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Model</Text>
-              <TouchableOpacity
+              <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Conversation Title</Text>
+              <TextInput
                 style={[
-                  styles.dropdownBtn,
+                  styles.input,
                   {
+                    color: colors.textPrimary,
                     backgroundColor: colors.backgroundSecondary,
-                    borderColor: colors.borderLight,
+                    borderColor: colors.border,
                   },
                 ]}
-                onPress={() => {
-                  setChatSettingsOpen(false);
-                  setModelSelectorOpen(true);
-                }}
-              >
-                <Text style={[styles.dropdownText, { color: colors.textPrimary }]}>{activeModelId}</Text>
-                <ChevronDown color={colors.textSecondary} size={18} />
-              </TouchableOpacity>
+                value={chatTitle}
+                onChangeText={setChatTitle}
+                placeholder="Chat title..."
+                placeholderTextColor={colors.textMuted}
+                maxLength={60}
+              />
             </View>
 
-            {/* Live Context Window & Memory Health */}
+            {/* Model Card Pill */}
+            <TouchableOpacity
+              style={[
+                styles.modelPillBtn,
+                {
+                  backgroundColor: colors.backgroundSecondary,
+                  borderColor: colors.borderLight,
+                },
+              ]}
+              onPress={() => {
+                setChatSettingsOpen(false);
+                setModelSelectorOpen(true);
+              }}
+            >
+              <View style={styles.modelPillLeft}>
+                <HardDrive size={18} color={colors.primary} />
+                <View>
+                  <Text style={[styles.modelPillTitle, { color: colors.textPrimary }]}>Active Model</Text>
+                  <Text style={[styles.modelPillSub, { color: colors.textSecondary }]}>{activeModelId}</Text>
+                </View>
+              </View>
+              <ChevronDown size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* --- LIVE CONTEXT MEMORY SLIDER & PRESETS (ChatGPT Style) --- */}
             <View style={[styles.contextCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.borderLight }]}>
               <View style={styles.contextHeaderRow}>
-                <View style={styles.contextTitleRow}>
-                  <HardDrive size={16} color={colors.primary} />
-                  <Text style={[styles.contextTitle, { color: colors.textPrimary }]}>Live Context Memory</Text>
+                <View style={styles.contextHeaderLeft}>
+                  <Text style={[styles.contextTitle, { color: colors.textPrimary }]}>Active Context Window</Text>
+                  <Text style={[styles.contextSubtitle, { color: colors.textMuted }]}>
+                    Sliding window automatically prunes oldest turns
+                  </Text>
                 </View>
-                <Text
-                  style={[
-                    styles.contextBadge,
-                    {
-                      backgroundColor: metrics.utilizationPercent > 85 ? colors.dangerLight : colors.primaryMuted,
-                      color: metrics.utilizationPercent > 85 ? colors.danger : colors.primary,
-                    },
-                  ]}
-                >
-                  {metrics.totalTokens.toLocaleString()} / {currentCtxLimit.toLocaleString()} tok ({metrics.utilizationPercent}%)
-                </Text>
+                <View style={[styles.contextBadge, { backgroundColor: colors.primaryMuted }]}>
+                  <Text style={[styles.contextBadgeText, { color: colors.primary }]}>
+                    {formatTokens(currentCtxLimit)} Limit
+                  </Text>
+                </View>
               </View>
 
               {/* Progress Bar */}
-              <View style={[styles.progressBarBg, { backgroundColor: colors.borderLight }]}>
+              <View style={[styles.progressBarTrack, { backgroundColor: colors.borderLight }]}>
                 <View
                   style={[
                     styles.progressBarFill,
                     {
-                      width: `${Math.min(100, Math.max(2, metrics.utilizationPercent))}%`,
+                      width: `${Math.min(100, metrics.utilizationPercent)}%`,
                       backgroundColor:
-                        metrics.utilizationPercent > 85
-                          ? colors.danger
-                          : metrics.utilizationPercent > 60
+                        metrics.utilizationPercent > 80
                           ? colors.warning
+                          : metrics.utilizationPercent > 95
+                          ? colors.danger
                           : colors.primary,
                     },
                   ]}
@@ -192,7 +212,7 @@ export const ChatSettingsModal: React.FC = () => {
 
               {/* Context Presets */}
               <View style={styles.contextPresetsRow}>
-                {[8192, 32768, 65536, 100000, 131072].map((size) => (
+                {CONTEXT_PRESET_SIZES.map((size) => (
                   <TouchableOpacity
                     key={size}
                     style={[
@@ -328,7 +348,7 @@ export const ChatSettingsModal: React.FC = () => {
                   keyboardType="numeric"
                   value={maxTokens}
                   onChangeText={setMaxTokens}
-                  placeholder="4096"
+                  placeholder={String(DEFAULT_CHAT_PARAMETERS.maxTokens)}
                   placeholderTextColor={colors.textMuted}
                 />
               </View>
@@ -347,7 +367,7 @@ export const ChatSettingsModal: React.FC = () => {
                   keyboardType="numeric"
                   value={contextWin}
                   onChangeText={setContextWin}
-                  placeholder="100000"
+                  placeholder={String(DEFAULT_CHAT_PARAMETERS.contextWindow)}
                   placeholderTextColor={colors.textMuted}
                 />
               </View>
@@ -357,13 +377,7 @@ export const ChatSettingsModal: React.FC = () => {
             <View style={[styles.settingGroup, { marginTop: -6 }]}>
               <Text style={[styles.groupLabel, { color: colors.textMuted, fontSize: 11 }]}>Presets</Text>
               <View style={styles.sliderControlRow}>
-                {[
-                  { label: '8k', val: '8192' },
-                  { label: '32k', val: '32768' },
-                  { label: '64k', val: '65536' },
-                  { label: '100k (Default)', val: '100000' },
-                  { label: '128k', val: '131072' },
-                ].map((preset) => {
+                {CONTEXT_PRESET_OPTIONS.map((preset) => {
                   const isSelected = contextWin === preset.val;
                   return (
                     <TouchableOpacity
@@ -467,6 +481,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   title: {
     fontSize: typography.size.lg,
     fontWeight: typography.weight.bold,
@@ -476,6 +495,38 @@ const styles = StyleSheet.create({
   },
   body: {
     maxHeight: 460,
+  },
+  scrollContent: {
+    maxHeight: 520,
+  },
+  input: {
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    height: 44,
+    fontSize: typography.size.sm,
+  },
+  modelPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  modelPillLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  modelPillTitle: {
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.semibold,
+  },
+  modelPillSub: {
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
   },
   settingGroup: {
     marginBottom: spacing.md,
@@ -596,6 +647,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  contextHeaderLeft: {
+    flex: 1,
+  },
   contextTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -605,14 +659,26 @@ const styles = StyleSheet.create({
     fontSize: typography.size.sm,
     fontWeight: typography.weight.bold,
   },
-  contextBadge: {
+  contextSubtitle: {
     fontSize: typography.size.xs,
-    fontWeight: typography.weight.bold,
+    marginTop: 2,
+  },
+  contextBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: borderRadius.full,
   },
+  contextBadgeText: {
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.bold,
+  },
   progressBarBg: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  progressBarTrack: {
     height: 6,
     borderRadius: 3,
     overflow: 'hidden',

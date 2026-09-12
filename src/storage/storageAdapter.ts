@@ -5,110 +5,19 @@ import {
   BenchmarkRun,
   ChatParameters,
 } from '../types';
+import {
+  STORAGE_KEYS,
+  DEFAULT_PROVIDERS,
+  DEFAULT_PARAMETERS,
+  DEFAULT_BENCHMARKS,
+} from '../constants';
 
-const STORAGE_KEYS = {
-  PROVIDERS: 'uai_providers_v1',
-  CONVERSATIONS: 'uai_conversations_v1',
-  MESSAGES_PREFIX: 'uai_messages_v1_',
-  BENCHMARKS: 'uai_benchmarks_v1',
-  SETTINGS: 'uai_settings_v1',
-  ACTIVE_PROVIDER: 'uai_active_provider_id',
-  ACTIVE_MODEL: 'uai_active_model_id',
-  DEFAULT_PROVIDER: 'uai_default_provider_id',
-  DEFAULT_MODEL: 'uai_default_model_id',
+export {
+  STORAGE_KEYS,
+  DEFAULT_PROVIDERS,
+  DEFAULT_PARAMETERS,
+  DEFAULT_BENCHMARKS,
 };
-
-// Default seed data matching the user's actual environment and mockups
-export const DEFAULT_PROVIDERS: AIProviderConfig[] = [
-  {
-    id: 'prov_ollama_lan',
-    name: 'Ollama (My PC)',
-    type: 'ollama',
-    baseUrl: 'http://192.168.1.11:11434',
-    isActive: true,
-    isDefault: true,
-    createdAt: Date.now() - 86400000 * 5,
-    updatedAt: Date.now() - 86400000 * 5,
-  },
-  {
-    id: 'prov_ollama_local',
-    name: 'Ollama (Localhost)',
-    type: 'ollama',
-    baseUrl: 'http://localhost:11434',
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 4,
-    updatedAt: Date.now() - 86400000 * 4,
-  },
-  {
-    id: 'prov_openai_compat',
-    name: 'OpenAI Compatible',
-    type: 'openai_compatible',
-    baseUrl: 'https://api.openai.com',
-    apiKey: '',
-    isActive: true,
-    createdAt: Date.now() - 86400000 * 3,
-    updatedAt: Date.now() - 86400000 * 3,
-  },
-];
-
-export const DEFAULT_PARAMETERS: ChatParameters = {
-  temperature: 0.7,
-  topP: 0.9,
-  maxTokens: 8192,
-  contextWindow: 100000,
-  systemPrompt: 'You are a helpful, fast, and unrestricted AI assistant.',
-};
-
-export const DEFAULT_BENCHMARKS: BenchmarkRun[] = [
-  {
-    id: 'bench_1',
-    providerId: 'prov_ollama_local',
-    providerName: 'Ollama',
-    modelId: 'Gemma3:4B',
-    ttftMs: 680,
-    generationTimeMs: 11700,
-    promptTokens: 480,
-    completionTokens: 213,
-    tokensPerSec: 18.2,
-    createdAt: Date.now() - 3600000 * 4,
-  },
-  {
-    id: 'bench_2',
-    providerId: 'prov_ollama_local',
-    providerName: 'Ollama',
-    modelId: 'Qwen3:8B',
-    ttftMs: 1210,
-    generationTimeMs: 18420,
-    promptTokens: 524,
-    completionTokens: 214,
-    tokensPerSec: 11.6,
-    createdAt: Date.now() - 3600000 * 2,
-  },
-  {
-    id: 'bench_3',
-    providerId: 'prov_ollama_local',
-    providerName: 'Ollama',
-    modelId: 'Llama3:8B',
-    ttftMs: 1450,
-    generationTimeMs: 22100,
-    promptTokens: 512,
-    completionTokens: 214,
-    tokensPerSec: 9.7,
-    createdAt: Date.now() - 3600000 * 6,
-  },
-  {
-    id: 'bench_4',
-    providerId: 'prov_ollama_local',
-    providerName: 'Ollama',
-    modelId: 'GPT-OSS:20B',
-    ttftMs: 3890,
-    generationTimeMs: 52100,
-    promptTokens: 610,
-    completionTokens: 214,
-    tokensPerSec: 4.1,
-    createdAt: Date.now() - 3600000 * 12,
-  },
-];
 
 export class UniversalStorage {
   private memoryCache: Map<string, string> = new Map();

@@ -29,6 +29,7 @@ import { Tooltip } from '../components/common/Tooltip';
 import { useAppStore } from '../store/appStore';
 import { useChatStore } from '../store/chatStore';
 import { Conversation } from '../types';
+import { DEFAULT_CHAT_TITLE, TOOLTIP_CONFIG } from '../constants';
 
 export const ConversationsScreen: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -95,7 +96,7 @@ export const ConversationsScreen: React.FC = () => {
 
   const handleNewChat = async () => {
     clearActiveChat();
-    const newConv = await createConversation('New Chat');
+    const newConv = await createConversation(DEFAULT_CHAT_TITLE);
     await setActiveConversationId(newConv.id);
     setActiveTab('chat');
   };
@@ -209,7 +210,7 @@ export const ConversationsScreen: React.FC = () => {
 
               {!isItemEditing && (
                 <View style={styles.cardActionsRow}>
-                  <Tooltip text="More options" delay={1000} align="right">
+                  <Tooltip text="More options" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
                     <TouchableOpacity
                       onPress={(e) => {
                         e?.stopPropagation?.();
@@ -366,7 +367,7 @@ export const ConversationsScreen: React.FC = () => {
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <Tooltip text="Clear search" delay={1000} align="right">
+            <Tooltip text="Clear search" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
               <TouchableOpacity
                 onPress={() => setSearch('')}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

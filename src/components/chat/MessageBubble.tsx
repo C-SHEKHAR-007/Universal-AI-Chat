@@ -28,6 +28,11 @@ import { useTheme } from '../../theme/useTheme';
 import { Tooltip } from '../common/Tooltip';
 import { ChatMessage } from '../../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import {
+  TOOLTIP_CONFIG,
+  FALLBACK_MODEL_NAME,
+  POPOVER_CONFIG,
+} from '../../constants';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -207,7 +212,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {!isStreaming && (
             <View style={styles.aiFooterRow}>
               {/* Copy Icon */}
-              <Tooltip text={copiedText ? 'Copied!' : 'Copy'} delay={1000} align="left">
+              <Tooltip text={copiedText ? 'Copied!' : 'Copy'} delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="left">
                 <TouchableOpacity
                   style={styles.iconActionBtn}
                   onPress={() => handleCopy(message.content)}
@@ -224,7 +229,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
               {/* Retry / Regenerate Icon */}
               {onRegenerate && (
-                <Tooltip text="Regenerate response" delay={1000} align="left">
+                <Tooltip text="Regenerate response" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="left">
                   <TouchableOpacity
                     style={styles.iconActionBtn}
                     onPress={onRegenerate}
@@ -238,7 +243,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
               {/* Vertical More Button with Popover */}
               <View style={styles.moreAnchorWrapper}>
-                <Tooltip text="More options" delay={1000} align="left">
+                <Tooltip text="More options" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="left">
                   <TouchableOpacity
                     style={[
                       styles.iconActionBtn,
@@ -290,7 +295,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                             style={[styles.popoverModelName, { color: colors.textPrimary }]}
                             numberOfLines={2}
                           >
-                            {message.telemetry?.modelId || 'Default Model'}
+                            {message.telemetry?.modelId || FALLBACK_MODEL_NAME}
                           </Text>
                           {message.telemetry?.providerName ? (
                             <Text
@@ -579,17 +584,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 9998,
+    zIndex: POPOVER_CONFIG.BACKDROP_Z_INDEX,
   },
   popoverCard: {
     position: 'absolute',
     left: 0,
-    bottom: 36,
-    width: 280,
+    bottom: POPOVER_CONFIG.BOTTOM_OFFSET,
+    width: POPOVER_CONFIG.WIDTH,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     padding: spacing.md,
-    zIndex: 9999,
+    zIndex: POPOVER_CONFIG.Z_INDEX,
     elevation: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },

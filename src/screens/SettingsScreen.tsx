@@ -23,6 +23,7 @@ import { useTheme } from '../theme/useTheme';
 import { Header } from '../components/common/Header';
 import { useAppStore } from '../store/appStore';
 import { storage } from '../storage/storageAdapter';
+import { APP_NAME, APP_VERSION, APP_SUBTITLE, TOAST_DURATION_MS } from '../constants';
 
 export const SettingsScreen: React.FC = () => {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -34,7 +35,7 @@ export const SettingsScreen: React.FC = () => {
     await storage.saveConversations([]);
     await loadInitialData();
     setClearedMsg(true);
-    setTimeout(() => setClearedMsg(false), 3000);
+    setTimeout(() => setClearedMsg(false), TOAST_DURATION_MS);
   };
 
   const handleExportData = async () => {
@@ -180,14 +181,14 @@ export const SettingsScreen: React.FC = () => {
                 <Info color={colors.textSecondary} size={20} />
                 <View>
                   <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
-                    Universal AI Client
+                    {APP_NAME}
                   </Text>
                   <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                    Version 1.0.0 (Expo SDK 52)
+                    {APP_SUBTITLE}
                   </Text>
                 </View>
               </View>
-              <Text style={[styles.tagVersion, { color: colors.textMuted }]}>v1.0.0</Text>
+              <Text style={[styles.tagVersion, { color: colors.textMuted }]}>v{APP_VERSION}</Text>
             </View>
           </View>
         </View>

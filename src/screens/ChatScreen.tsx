@@ -18,6 +18,7 @@ import { ChatInputBar } from '../components/chat/ChatInputBar';
 import { useTheme } from '../theme/useTheme';
 import { useAppStore } from '../store/appStore';
 import { useChatStore } from '../store/chatStore';
+import { APP_NAME, DEFAULT_CHAT_TITLE } from '../constants';
 
 export const ChatScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
@@ -100,7 +101,7 @@ export const ChatScreen: React.FC = () => {
 
   const handleNewChat = async () => {
     clearActiveChat();
-    await createConversation('New Chat');
+    await createConversation(DEFAULT_CHAT_TITLE);
   };
 
   const hasMessages = messages.length > 0;
@@ -112,7 +113,7 @@ export const ChatScreen: React.FC = () => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       <Header
-        title={activeConversation?.title || 'Universal AI'}
+        title={activeConversation?.title || APP_NAME}
         editableTitle={!!activeConversationId}
         onTitleSave={(newTitle) => {
           if (activeConversationId) {

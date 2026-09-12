@@ -10,6 +10,7 @@ import {
   MessageTelemetry,
   ModelMeta,
 } from '../types';
+import { PROVIDER_ENDPOINTS, DEFAULT_CHAT_PARAMETERS } from '../constants';
 
 export class OllamaProvider implements AIProvider {
   config: AIProviderConfig;
@@ -30,7 +31,7 @@ export class OllamaProvider implements AIProvider {
     const startTime = Date.now();
     const baseUrl = this.cleanBaseUrl();
     try {
-      const response = await fetch(`${baseUrl}/api/tags`, {
+      const response = await fetch(`${baseUrl}${PROVIDER_ENDPOINTS.OLLAMA_TAGS}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +67,7 @@ export class OllamaProvider implements AIProvider {
   async getModels(): Promise<ModelMeta[]> {
     const baseUrl = this.cleanBaseUrl();
     try {
-      const response = await fetch(`${baseUrl}/api/tags`);
+      const response = await fetch(`${baseUrl}${PROVIDER_ENDPOINTS.OLLAMA_TAGS}`);
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
       const data = await response.json();
 
@@ -90,7 +91,7 @@ export class OllamaProvider implements AIProvider {
           family,
           quantization,
           modifiedAt: m.modified_at,
-          contextLength: 8192,
+          contextLength: DEFAULT_CHAT_PARAMETERS.contextWindow,
         };
       });
     } catch (err) {
@@ -136,14 +137,14 @@ export class OllamaProvider implements AIProvider {
       messages: ollamaMessages,
       stream: true,
       options: {
-        temperature: parameters?.temperature ?? 0.7,
-        top_p: parameters?.topP ?? 0.9,
-        num_predict: parameters?.maxTokens ?? 4096,
-        num_ctx: parameters?.contextWindow ?? 8192,
+        temperature: parameters?.temperature ?? DEFAULT_CHAT_PARAMETERS.temperature,
+        top_p: parameters?.topP ?? DEFAULT_CHAT_PARAMETERS.topP,
+        num_predict: parameters?.maxTokens ?? DEFAULT_CHAT_PARAMETERS.maxTokens,
+        num_ctx: parameters?.contextWindow ?? DEFAULT_CHAT_PARAMETERS.contextWindow,
       },
     };
 
-    const response = await fetch(`${baseUrl}/api/chat`, {
+    const response = await fetch(`${baseUrl}${PROVIDER_ENDPOINTS.OLLAMA_CHAT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

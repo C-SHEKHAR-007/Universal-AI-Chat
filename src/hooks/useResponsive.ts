@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { ScreenBreakpoint } from '../types';
+import { BREAKPOINTS, DRAWER_CONFIG } from '../constants';
 
 export interface ResponsiveInfo {
   width: number;
@@ -16,39 +18,40 @@ export interface ResponsiveInfo {
 
 export function useResponsive(): ResponsiveInfo {
   const { width, height } = useWindowDimensions();
-  
-  const isPortrait = height >= width;
-  const isLandscape = !isPortrait;
-  const minDim = Math.min(width, height);
-  
-  const isPhone = width < 600 || (isLandscape && width < 768);
-  const isTablet = width >= 600 && width < 1024;
-  const isLargeTablet = width >= 1024;
-  
-  // Tablet landscape supports dual-pane persistent sidebar
-  const isMasterDetailSupported = width >= 768;
 
-  let breakpoint: ScreenBreakpoint = 'phone_portrait';
-  if (width < 600) {
-    breakpoint = isPortrait ? 'phone_portrait' : 'phone_landscape';
-  } else if (width < 900) {
-    breakpoint = isPortrait ? 'tablet_portrait' : 'tablet_landscape';
-  } else {
-    breakpoint = 'tablet_landscape';
-  }
+  return useMemo(() => {
+    const isPortrait = height >= width;
+    const isLandscape = !isPortrait;
+    
+    const isPhone = width < BREAKPOINTS.PHONE || (isLandscape && width < BREAKPOINTS.SIDEBAR_MIN);
+    const isTablet = width >= BREAKPOINTS.TABLET_MIN && width < BREAKPOINTS.TABLET_MAX;
+    const isLargeTablet = width >= BREAKPOINTS.TABLET_MAX;
+    
+    // Tablet landscape supports dual-pane persistent sidebar
+    const isMasterDetailSupported = width >= BREAKPOINTS.SIDEBAR_MIN;
 
-  const drawerWidth = Math.min(320, width * 0.8);
+    let breakpoint: ScreenBreakpoint = 'phone_portrait';
+    if (width < BREAKPOINTS.PHONE) {
+      breakpoint = isPortrait ? 'phone_portrait' : 'phone_landscape';
+    } else if (width < BREAKPOINTS.TABLET_PORTRAIT_MAX) {
+      breakpoint = isPortrait ? 'tablet_portrait' : 'tablet_landscape';
+    } else {
+      breakpoint = 'tablet_landscape';
+    }
 
-  return {
-    width,
-    height,
-    isPortrait,
-    isLandscape,
-    isPhone,
-    isTablet,
-    isLargeTablet,
-    isMasterDetailSupported,
-    breakpoint,
-    drawerWidth,
-  };
+    const drawerWidth = Math.min(DRAWER_CONFIG.MAX_WIDTH, width * DRAWER_CONFIG.WIDTH_RATIO);
+
+    return {
+      width,
+      height,
+      isPortrait,
+      isLandscape,
+      isPhone,
+      isTablet,
+      isLargeTablet,
+      isMasterDetailSupported,
+      breakpoint,
+      drawerWidth,
+    };
+  }, [width, height]);
 }

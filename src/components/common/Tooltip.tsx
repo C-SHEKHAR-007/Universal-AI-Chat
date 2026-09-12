@@ -8,6 +8,8 @@ import {
   Animated,
 } from 'react-native';
 
+import { TOOLTIP_CONFIG } from '../../constants';
+
 interface TooltipProps {
   text: string;
   delay?: number;
@@ -19,7 +21,7 @@ interface TooltipProps {
 
 export const Tooltip: React.FC<TooltipProps> = ({
   text,
-  delay = 1000,
+  delay = TOOLTIP_CONFIG.DEFAULT_DELAY_MS,
   position = 'bottom',
   align = 'center',
   children,

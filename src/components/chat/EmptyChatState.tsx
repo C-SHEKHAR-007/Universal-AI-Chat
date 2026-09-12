@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'r
 import { Brain, Lightbulb, Code2, BarChart2, BookOpen } from 'lucide-react-native';
 import { spacing, typography, borderRadius } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
+import { PROMPT_SUGGESTION_CARDS, PromptSuggestionCard } from '../../constants';
 
 interface EmptyChatStateProps {
   onSelectPrompt: (prompt: string) => void;
@@ -20,66 +21,63 @@ export const EmptyChatState: React.FC<EmptyChatStateProps> = ({ onSelectPrompt }
     return 'Good evening';
   }, []);
 
-  const promptCards = [
-    {
-      title: 'Explain something',
-      subtitle: 'Pods, architecture & concepts',
-      prompt: 'Explain Kubernetes architecture, pods, and lifecycle in simple intuitive terms.',
-      icon: <Lightbulb color={colors.primary} size={20} strokeWidth={2} />,
-      iconBg: colors.primaryMuted,
-    },
-    {
-      title: 'Write code',
-      subtitle: 'Functions, hooks & debug',
-      prompt: 'Write a TypeScript function to stream SSE tokens and calculate live tokens per second.',
-      icon: <Code2 color={colors.purple} size={20} strokeWidth={2} />,
-      iconBg: colors.purpleLight,
-    },
-    {
-      title: 'Analyze data',
-      subtitle: 'Benchmarks & metrics',
-      prompt: 'Help me benchmark local model quantization trade-offs between 4-bit and 8-bit weights.',
-      icon: <BarChart2 color={colors.success} size={20} strokeWidth={2} />,
-      iconBg: colors.successLight,
-    },
-    {
-      title: 'Learn something',
-      subtitle: 'Tutorials & fast research',
-      prompt: 'What are the top hardware acceleration techniques for running Ollama models at peak speed?',
-      icon: <BookOpen color={colors.warning} size={20} strokeWidth={2} />,
-      iconBg: colors.warningLight,
-    },
-  ];
+  const getCardIcon = (category: PromptSuggestionCard['category']) => {
+    switch (category) {
+      case 'explain':
+        return {
+          icon: <Lightbulb color={colors.primary} size={20} strokeWidth={2} />,
+          bg: colors.primaryMuted,
+        };
+      case 'code':
+        return {
+          icon: <Code2 color={colors.purple} size={20} strokeWidth={2} />,
+          bg: colors.purpleLight,
+        };
+      case 'analyze':
+        return {
+          icon: <BarChart2 color={colors.success} size={20} strokeWidth={2} />,
+          bg: colors.successLight,
+        };
+      case 'learn':
+        return {
+          icon: <BookOpen color={colors.warning} size={20} strokeWidth={2} />,
+          bg: colors.warningLight,
+        };
+    }
+  };
 
   const renderCard = (
-    card: (typeof promptCards)[0],
+    card: PromptSuggestionCard,
     positionStyle?: any
-  ) => (
-    <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-        },
-        positionStyle,
-      ]}
-      onPress={() => onSelectPrompt(card.prompt)}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.cardIconWrapper, { backgroundColor: card.iconBg }]}>
-        {card.icon}
-      </View>
-      <View style={styles.cardTextContainer}>
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-          {card.title}
-        </Text>
-        <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-          {card.subtitle}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+  ) => {
+    const { icon, bg } = getCardIcon(card.category);
+    return (
+      <TouchableOpacity
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+          },
+          positionStyle,
+        ]}
+        onPress={() => onSelectPrompt(card.prompt)}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.cardIconWrapper, { backgroundColor: bg }]}>
+          {icon}
+        </View>
+        <View style={styles.cardTextContainer}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+            {card.title}
+          </Text>
+          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+            {card.subtitle}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -107,8 +105,8 @@ export const EmptyChatState: React.FC<EmptyChatStateProps> = ({ onSelectPrompt }
       <View style={styles.cardsContainer}>
         {isSingleCol ? (
           <>
-            {promptCards.map((card, idx) => (
-              <View key={idx} style={styles.singleRow}>
+            {PROMPT_SUGGESTION_CARDS.map((card) => (
+              <View key={card.id} style={styles.singleRow}>
                 {renderCard(card)}
               </View>
             ))}
@@ -117,14 +115,14 @@ export const EmptyChatState: React.FC<EmptyChatStateProps> = ({ onSelectPrompt }
           <>
             {/* Row 1: Explain something + Write code */}
             <View style={styles.row}>
-              {renderCard(promptCards[0], styles.cardLeft)}
-              {renderCard(promptCards[1], styles.cardRight)}
+              {renderCard(PROMPT_SUGGESTION_CARDS[0], styles.cardLeft)}
+              {renderCard(PROMPT_SUGGESTION_CARDS[1], styles.cardRight)}
             </View>
 
             {/* Row 2: Analyze data + Learn something */}
             <View style={styles.row}>
-              {renderCard(promptCards[2], styles.cardLeft)}
-              {renderCard(promptCards[3], styles.cardRight)}
+              {renderCard(PROMPT_SUGGESTION_CARDS[2], styles.cardLeft)}
+              {renderCard(PROMPT_SUGGESTION_CARDS[3], styles.cardRight)}
             </View>
           </>
         )}

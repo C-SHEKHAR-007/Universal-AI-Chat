@@ -22,6 +22,7 @@ import { useAppStore } from '../store/appStore';
 import { AIProviderConfig } from '../types';
 import { ProviderFactory } from '../providers/providerFactory';
 import { storage } from '../storage/storageAdapter';
+import { DEFAULT_OLLAMA_LAN_URL } from '../constants';
 
 export const ProvidersScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -70,9 +71,9 @@ export const ProvidersScreen: React.FC = () => {
   const handleQuickConnectPC = async () => {
     const pcProvider: AIProviderConfig = {
       id: 'prov_ollama_pc',
-      name: 'Ollama (My PC: 192.168.1.11)',
+      name: `Ollama (${DEFAULT_OLLAMA_LAN_URL})`,
       type: 'ollama',
-      baseUrl: 'http://192.168.1.11:11434',
+      baseUrl: DEFAULT_OLLAMA_LAN_URL,
       isActive: true,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -95,7 +96,7 @@ export const ProvidersScreen: React.FC = () => {
               📱 Mobile Wi-Fi Endpoint
             </Text>
             <Text style={[styles.wifiTipText, { color: colors.textSecondary }]}>
-              On mobile, use your computer's Wi-Fi IP: <Text style={{ fontWeight: 'bold', color: colors.textPrimary }}>http://192.168.1.11:11434</Text>
+              On mobile, use your computer's Wi-Fi IP: <Text style={{ fontWeight: 'bold', color: colors.textPrimary }}>{DEFAULT_OLLAMA_LAN_URL}</Text>
             </Text>
           </View>
           <TouchableOpacity

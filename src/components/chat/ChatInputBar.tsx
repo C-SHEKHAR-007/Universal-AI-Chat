@@ -6,6 +6,11 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/appStore';
 import { useChatStore } from '../../store/chatStore';
 import { Tooltip } from '../common/Tooltip';
+import {
+  INPUT_PLACEHOLDER,
+  MAX_INPUT_LENGTH,
+  TOOLTIP_CONFIG,
+} from '../../constants';
 
 interface ChatInputBarProps {
   onSend: (text: string) => void;
@@ -58,7 +63,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
           },
         ]}
       >
-        <Tooltip text="Chat parameters & system prompt" delay={1000} position="top" align="left">
+        <Tooltip text="Chat parameters & system prompt" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} position="top" align="left">
           <TouchableOpacity
             style={styles.attachmentButton}
             onPress={() => setChatSettingsOpen(true)}
@@ -71,17 +76,17 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
 
         <TextInput
           style={[styles.input, { color: colors.textPrimary, outlineStyle: 'none' as any }]}
-          placeholder="Ask anything or explore ideas..."
+          placeholder={INPUT_PLACEHOLDER}
           placeholderTextColor={colors.textMuted}
           value={text}
           onChangeText={setText}
           multiline
-          maxLength={4000}
+          maxLength={MAX_INPUT_LENGTH}
           onKeyPress={handleKeyDown}
         />
 
         {text.length > 0 && !isStreaming && (
-          <Tooltip text="Clear input" delay={1000} position="top" align="right">
+          <Tooltip text="Clear input" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} position="top" align="right">
             <TouchableOpacity
               style={styles.clearBtn}
               onPress={() => setText('')}
@@ -94,7 +99,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
         )}
 
         {isStreaming ? (
-          <Tooltip text="Stop generation" delay={1000} position="top" align="right">
+          <Tooltip text="Stop generation" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} position="top" align="right">
             <TouchableOpacity
               style={[styles.stopButton, { backgroundColor: colors.danger }]}
               onPress={stopGeneration}
@@ -104,7 +109,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
             </TouchableOpacity>
           </Tooltip>
         ) : (
-          <Tooltip text="Send message" delay={1000} position="top" align="right">
+          <Tooltip text="Send message" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} position="top" align="right">
             <TouchableOpacity
               style={[
                 styles.sendButton,
@@ -139,7 +144,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
           <ChevronRight color={colors.textMuted} size={13} />
         </TouchableOpacity>
 
-        <Tooltip text="Chat settings" delay={1000} position="top" align="right">
+        <Tooltip text="Chat settings" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} position="top" align="right">
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={() => setChatSettingsOpen(true)}

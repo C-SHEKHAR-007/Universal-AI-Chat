@@ -1,4 +1,5 @@
 import { ChatMessage, ChatParameters } from '../types';
+import { CONTEXT_WINDOW_CONFIG, DEFAULT_CHAT_PARAMETERS } from '../constants';
 
 export interface ContextMetrics {
   totalTokens: number;
@@ -27,12 +28,11 @@ export function estimateTokens(text: string): number {
   if (!trimmed) return 0;
 
   // Words count heuristic combined with character length
-  // In typical English + code, 1 token is approx 3.8 chars or 0.75 words.
-  const charEstimate = Math.ceil(trimmed.length / 3.8);
-  const wordEstimate = Math.ceil(trimmed.split(/\s+/).length * 1.3);
+  const charEstimate = Math.ceil(trimmed.length / CONTEXT_WINDOW_CONFIG.CHARS_PER_TOKEN);
+  const wordEstimate = Math.ceil(trimmed.split(/\s+/).length * CONTEXT_WINDOW_CONFIG.WORDS_MULTIPLIER);
 
-  // Return the weighted blended estimate with a 3-token role header overhead
-  return Math.max(1, Math.round((charEstimate * 0.6 + wordEstimate * 0.4) + 3));
+  // Return the weighted blended estimate with role header overhead
+  return Math.max(1, Math.round((charEstimate * 0.6 + wordEstimate * 0.4) + CONTEXT_WINDOW_CONFIG.ROLE_OVERHEAD_TOKENS));
 }
 
 /**
@@ -42,7 +42,7 @@ export function calculateContextMetrics(
   messages: ChatMessage[],
   parameters?: ChatParameters
 ): ContextMetrics {
-  const contextWindow = parameters?.contextWindow || 8192;
+  const contextWindow = parameters?.contextWindow || DEFAULT_CHAT_PARAMETERS.contextWindow;
   const systemPrompt = parameters?.systemPrompt || '';
 
   const systemTokens = systemPrompt ? estimateTokens(systemPrompt) : 0;
@@ -70,34 +70,22 @@ export function calculateContextMetrics(
 /**
  * Constructs the active context payload for the LLM using a ChatGPT-style
  * pair-preserving sliding window.
- *
- * How it works (mirrors ChatGPT's approach):
- * 1. System Prompt is ALWAYS preserved at the start.
- * 2. maxTokens are reserved for generation output (fixed budget, not a %).
- * 3. Messages are added backwards from the most recent turns.
- * 4. User and Assistant messages are trimmed in cohesive pairs so the LLM
- *    never sees an orphaned response without its question.
- * 5. When older turns are pruned, a system-level context marker is injected
- *    so the model knows earlier conversation was summarized away.
- *
- * This is designed for 100k+ context windows — it runs transparently and
- * automatically, exactly like ChatGPT's long conversation handling.
  */
 export function buildContextPayload(
   messages: ChatMessage[],
   parameters?: ChatParameters
 ): ContextPayloadResult {
-  const contextWindow = parameters?.contextWindow || 100000;
-  const maxTokens = parameters?.maxTokens || 8192;
+  const contextWindow = parameters?.contextWindow || DEFAULT_CHAT_PARAMETERS.contextWindow;
+  const maxTokens = parameters?.maxTokens || DEFAULT_CHAT_PARAMETERS.maxTokens;
   const systemPrompt = parameters?.systemPrompt?.trim() || '';
 
   const systemTokens = systemPrompt ? estimateTokens(systemPrompt) : 0;
 
   // Reserve exactly maxTokens for generation output (ChatGPT-style fixed reservation)
-  // Also keep a small safety margin (~200 tokens) to avoid boundary edge cases
-  const safetyMargin = 200;
+  // Also keep a small safety margin to avoid boundary edge cases
+  const safetyMargin = CONTEXT_WINDOW_CONFIG.SAFETY_MARGIN_TOKENS;
   const availableInputTokens = Math.max(
-    1024,
+    CONTEXT_WINDOW_CONFIG.MIN_AVAILABLE_INPUT_TOKENS,
     contextWindow - systemTokens - maxTokens - safetyMargin
   );
 
