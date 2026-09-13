@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import {
   Copy,
@@ -28,10 +30,10 @@ import { useTheme } from '../../theme/useTheme';
 import { Tooltip } from '../common/Tooltip';
 import { ChatMessage } from '../../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { LoadingIndicator } from './LoadingIndicator';
 import {
   TOOLTIP_CONFIG,
   FALLBACK_MODEL_NAME,
-  POPOVER_CONFIG,
 } from '../../constants';
 import { formatClockTime, formatDurationSeconds, copyToClipboard } from '../../utils';
 
@@ -56,27 +58,87 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [editDraft, setEditDraft] = useState(message.content);
   const [showOptions, setShowOptions] = useState(false);
 
+  const moreBtnRef = useRef<View>(null);
+  const [popoverPosition, setPopoverPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  }>({ top: 100, left: 16, width: 280 });
+
   const charCount = message.content.length;
   const wordCount = message.content.trim() ? message.content.trim().split(/\s+/).length : 0;
 
-  // Auto-close popover when clicking anywhere outside on web
+  // Auto-close popover on global web events or scroll
   useEffect(() => {
     if (!showOptions) return;
     const handleGlobalClick = () => {
       setShowOptions(false);
     };
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const timer = setTimeout(() => {
-        window.addEventListener('click', handleGlobalClick);
-        window.addEventListener('touchstart', handleGlobalClick);
-      }, 0);
+      window.addEventListener('resize', handleGlobalClick);
       return () => {
-        clearTimeout(timer);
-        window.removeEventListener('click', handleGlobalClick);
-        window.removeEventListener('touchstart', handleGlobalClick);
+        window.removeEventListener('resize', handleGlobalClick);
       };
     }
   }, [showOptions]);
+
+  const toggleOptions = () => {
+    if (showOptions) {
+      setShowOptions(false);
+      return;
+    }
+
+    const calculateAndOpen = (x: number, y: number, width: number, height: number) => {
+      const screenWidth = typeof window !== 'undefined' ? window.innerWidth : Dimensions.get('window').width;
+      const screenHeight = typeof window !== 'undefined' ? window.innerHeight : Dimensions.get('window').height;
+      const cardWidth = Math.min(285, screenWidth - 24);
+      const estimatedHeight = 260;
+
+      // Top navigation header is ~56px, bottom input bar is ~80px
+      const headerOffset = 58;
+      const bottomBarOffset = 80;
+
+      const spaceAbove = y - headerOffset;
+      const spaceBelow = screenHeight - (y + height) - bottomBarOffset;
+
+      let popTop: number;
+      // Prioritize placing below if space below is sufficient, or if space below > space above
+      if (spaceBelow >= estimatedHeight) {
+        popTop = y + height + 6;
+      } else if (spaceAbove >= estimatedHeight) {
+        popTop = y - estimatedHeight - 6;
+      } else {
+        if (spaceBelow >= spaceAbove) {
+          popTop = Math.min(y + height + 6, screenHeight - estimatedHeight - 16);
+        } else {
+          popTop = Math.max(headerOffset + 8, y - estimatedHeight - 6);
+        }
+      }
+
+      // Horizontal alignment: start near button left, clamp within screen boundaries
+      const popLeft = Math.max(12, Math.min(x, screenWidth - cardWidth - 12));
+
+      setPopoverPosition({ top: popTop, left: popLeft, width: cardWidth });
+      setShowOptions(true);
+    };
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const domNode = moreBtnRef.current as any;
+      if (domNode?.getBoundingClientRect) {
+        const rect = domNode.getBoundingClientRect();
+        calculateAndOpen(rect.left, rect.top, rect.width, rect.height);
+        return;
+      }
+    }
+
+    if (moreBtnRef.current?.measureInWindow) {
+      moreBtnRef.current.measureInWindow((x, y, width, height) => {
+        calculateAndOpen(x, y, width, height);
+      });
+    } else {
+      setShowOptions(true);
+    }
+  };
 
   const isUser = message.role === 'user';
 
@@ -199,13 +261,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {message.content}
                 </Text>
               </View>
+            ) : isStreaming && !message.content ? (
+              <LoadingIndicator
+                conversationId={message.conversationId}
+                modelName={message.telemetry?.modelId}
+              />
             ) : (
-              <MarkdownRenderer content={message.content} isUser={false} />
-            )}
-            {isStreaming && (
-              <View style={styles.streamingCursorWrapper}>
-                <View style={[styles.streamingDot, { backgroundColor: colors.primary }]} />
-              </View>
+              <MarkdownRenderer
+                content={message.content}
+                isUser={false}
+                isStreaming={isStreaming}
+              />
             )}
           </View>
 
@@ -243,38 +309,51 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
 
               {/* Vertical More Button with Popover */}
-              <View style={styles.moreAnchorWrapper}>
-                <Tooltip text="More options" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="left">
-                  <TouchableOpacity
-                    style={[
-                      styles.iconActionBtn,
-                      showOptions && { backgroundColor: colors.backgroundSecondary },
-                    ]}
-                    onPress={() => setShowOptions(!showOptions)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    accessibilityLabel="More options"
-                  >
-                    <MoreVertical
-                      color={showOptions ? colors.primary : colors.textMuted}
-                      size={15}
-                    />
-                  </TouchableOpacity>
-                </Tooltip>
+              <Tooltip text="More options" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="left">
+                <TouchableOpacity
+                  ref={moreBtnRef}
+                  style={[
+                    styles.iconActionBtn,
+                    showOptions && { backgroundColor: colors.backgroundSecondary },
+                  ]}
+                  onPress={toggleOptions}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityLabel="More options"
+                >
+                  <MoreVertical
+                    color={showOptions ? colors.primary : colors.textMuted}
+                    size={15}
+                  />
+                </TouchableOpacity>
+              </Tooltip>
 
-                {/* Popover Card */}
-                {showOptions && (
-                  <>
+              {/* Responsive & Collision-Aware Floating Modal Popover */}
+              {showOptions && (
+                <Modal
+                  transparent
+                  visible={showOptions}
+                  onRequestClose={() => setShowOptions(false)}
+                  animationType="none"
+                >
+                  <View style={styles.modalRoot}>
+                    {/* Transparent Dismiss Backdrop */}
                     <TouchableOpacity
-                      style={styles.popoverBackdrop}
+                      style={StyleSheet.absoluteFill}
                       activeOpacity={1}
                       onPress={() => setShowOptions(false)}
                     />
+
+                    {/* Popover Card dynamically positioned */}
                     <View
                       style={[
-                        styles.popoverCard,
+                        styles.popoverCardFloating,
                         {
+                          top: popoverPosition.top,
+                          left: popoverPosition.left,
+                          width: popoverPosition.width,
                           backgroundColor: colors.card,
                           borderColor: colors.border,
+                          shadowColor: colors.textPrimary,
                         },
                       ]}
                     >
@@ -396,9 +475,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         </TouchableOpacity>
                       </View>
                     </View>
-                  </>
-                )}
-              </View>
+                  </View>
+                </Modal>
+              )}
             </View>
           )}
         </View>
@@ -549,17 +628,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     marginTop: 9,
   },
-  streamingCursorWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 18,
-    marginTop: 4,
-  },
-  streamingDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-  },
   iconActionBtn: {
     width: 28,
     height: 28,
@@ -575,29 +643,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 4,
   },
-  moreAnchorWrapper: {
+  modalRoot: {
+    flex: 1,
     position: 'relative',
-    zIndex: 1000,
   },
-  popoverBackdrop: {
-    position: (Platform.OS === 'web' ? 'fixed' : 'absolute') as any,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: POPOVER_CONFIG.BACKDROP_Z_INDEX,
-  },
-  popoverCard: {
+  popoverCardFloating: {
     position: 'absolute',
-    left: 0,
-    bottom: POPOVER_CONFIG.BOTTOM_OFFSET,
-    width: POPOVER_CONFIG.WIDTH,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     padding: spacing.md,
-    zIndex: POPOVER_CONFIG.Z_INDEX,
-    elevation: 12,
-    shadowColor: '#000',
+    zIndex: 99999,
+    elevation: 16,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 18,

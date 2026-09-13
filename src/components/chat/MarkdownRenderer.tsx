@@ -1,33 +1,37 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   Platform,
   Linking,
 } from 'react-native';
 import {
-  FileCode,
-  Copy,
-  Check,
   Info,
   Sparkles,
   AlertCircle,
   AlertTriangle,
-  ExternalLink,
 } from 'lucide-react-native';
 import { spacing, typography, borderRadius } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
-import { copyToClipboard } from '../../utils';
+import { StreamingCursor } from './StreamingCursor';
+import { CodeBlock } from './CodeBlock';
 
-interface MarkdownRendererProps {
+export { StreamingCursor } from './StreamingCursor';
+export { CodeBlock } from './CodeBlock';
+
+export interface MarkdownRendererProps {
   content: string;
   isUser?: boolean;
+  isStreaming?: boolean;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isUser = false }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
+  content,
+  isUser = false,
+  isStreaming = false,
+}) => {
   const { colors } = useTheme();
 
   // Parse inline markdown tokens (code, links, bold, italic, strikethrough)
@@ -184,6 +188,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
   return (
     <View style={styles.container}>
       {parts.map((part, pIdx) => {
+        const isLastPart = pIdx === parts.length - 1;
+
         // 1. Code Block
         if (part.startsWith('```') && part.endsWith('```')) {
           const rawInner = part.slice(3, -3);
@@ -196,6 +202,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
               key={`code_${pIdx}`}
               code={codeText}
               language={language || 'code'}
+              isStreaming={isStreaming && isLastPart}
             />
           );
         }
@@ -205,9 +212,19 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
         const elements: React.ReactNode[] = [];
         let i = 0;
 
+        // Find index of the last non-empty line in this part
+        let lastNonEmptyLineIdx = -1;
+        for (let idx = rawLines.length - 1; idx >= 0; idx--) {
+          if (rawLines[idx].trim()) {
+            lastNonEmptyLineIdx = idx;
+            break;
+          }
+        }
+
         while (i < rawLines.length) {
           const line = rawLines[i];
           const trimmed = line.trim();
+          const isCurrentLast = isStreaming && isLastPart && i === lastNonEmptyLineIdx;
 
           // A. Blank line
           if (!trimmed) {
@@ -296,6 +313,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
                       style={[styles.alertText, { color: colors.textPrimary }]}
                     >
                       {renderInline(bLine, [styles.alertText, { color: colors.textPrimary }])}
+                      {isStreaming && isLastPart && bIdx === alertBodyLines.length - 1 && <StreamingCursor />}
                     </Text>
                   ))}
                 </View>
@@ -319,6 +337,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
                       style={[styles.blockquoteText, { color: colors.textSecondary }]}
                     >
                       {renderInline(qLine, [styles.blockquoteText, { color: colors.textSecondary }])}
+                      {isStreaming && isLastPart && qIdx === quoteLines.length - 1 && <StreamingCursor />}
                     </Text>
                   ))}
                 </View>
@@ -414,6 +433,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
             elements.push(
               <Text key={`h_${pIdx}_${i}`} style={headerStyle}>
                 {renderInline(headerContent, headerStyle)}
+                {isCurrentLast && <StreamingCursor />}
               </Text>
             );
             i++;
@@ -458,6 +478,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
                 )}
                 <Text style={[baseStyle, { flex: 1 }]}>
                   {renderInline(itemContent, baseStyle)}
+                  {isCurrentLast && <StreamingCursor />}
                 </Text>
               </View>
             );
@@ -473,6 +494,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
           elements.push(
             <Text key={`p_${pIdx}_${i}`} style={[baseStyle, styles.paragraphText]}>
               {renderInline(line, baseStyle)}
+              {isCurrentLast && <StreamingCursor />}
             </Text>
           );
           i++;
@@ -484,75 +506,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, isU
   );
 };
 
-// Formatted Code Block Component
-interface CodeBlockProps {
-  code: string;
-  language: string;
-}
-
-export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
-  const { colors } = useTheme();
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyCode = async () => {
-    const success = await copyToClipboard(code);
-    if (success) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  return (
-    <View
-      style={[
-        styles.codeContainer,
-        {
-          backgroundColor: colors.codeBg,
-          borderColor: colors.codeBorder,
-        },
-      ]}
-    >
-      <View
-        style={[
-          styles.codeHeader,
-          {
-            backgroundColor: colors.codeHeader,
-            borderBottomColor: colors.codeBorder,
-          },
-        ]}
-      >
-        <View style={styles.codeHeaderLeft}>
-          <FileCode color={colors.textSecondary} size={14} />
-          <Text style={[styles.codeLanguage, { color: colors.textSecondary }]}>
-            {language || 'code'}
-          </Text>
-        </View>
-        <TouchableOpacity style={styles.codeCopyButton} onPress={handleCopyCode}>
-          {copied ? (
-            <Check color={colors.success} size={13} />
-          ) : (
-            <Copy color={colors.textSecondary} size={13} />
-          )}
-          <Text
-            style={[
-              styles.codeCopyText,
-              { color: copied ? colors.success : colors.textSecondary },
-            ]}
-          >
-            {copied ? 'Copied' : 'Copy'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.codeBody}>
-        <Text style={[styles.codeText, { color: colors.codeText }]}>{code}</Text>
-      </View>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+  },
+  inlineStreamingCursor: {
+    fontSize: typography.size.md,
+    fontWeight: '900',
+    lineHeight: 22,
   },
   paragraphGap: {
     height: 8,
@@ -722,49 +683,5 @@ const styles = StyleSheet.create({
   tableCellText: {
     fontSize: 13,
     lineHeight: 18,
-  },
-  // Code Block
-  codeContainer: {
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    marginVertical: 8,
-    overflow: 'hidden',
-  },
-  codeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-    borderBottomWidth: 1,
-  },
-  codeHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  codeLanguage: {
-    fontSize: typography.size.xs,
-    fontFamily: 'monospace',
-    textTransform: 'lowercase',
-    fontWeight: typography.weight.medium,
-  },
-  codeCopyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-  },
-  codeCopyText: {
-    fontSize: typography.size.xs,
-  },
-  codeBody: {
-    padding: spacing.md,
-  },
-  codeText: {
-    fontFamily: 'monospace',
-    fontSize: 13,
-    lineHeight: 19,
   },
 });
