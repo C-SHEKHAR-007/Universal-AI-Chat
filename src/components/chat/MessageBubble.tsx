@@ -91,12 +91,21 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
     const calculateAndOpen = (x: number, y: number, width: number, height: number) => {
       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : Dimensions.get('window').width;
       const screenHeight = typeof window !== 'undefined' ? window.innerHeight : Dimensions.get('window').height;
-      const cardWidth = Math.min(285, screenWidth - 24);
+      const cardWidth = Math.min(290, screenWidth - 28);
       const estimatedHeight = 260;
 
       // Top navigation header is ~56px, bottom input bar is ~80px
       const headerOffset = 58;
       const bottomBarOffset = 80;
+
+      // If coordinates are missing or 0 (e.g. Android measurement glitch), center on screen
+      if ((!x && !y) || (x <= 0 && y <= 0)) {
+        const fallbackTop = Math.max(headerOffset + 16, (screenHeight - estimatedHeight) / 2 - 20);
+        const fallbackLeft = Math.max(14, (screenWidth - cardWidth) / 2);
+        setPopoverPosition({ top: fallbackTop, left: fallbackLeft, width: cardWidth });
+        setShowOptions(true);
+        return;
+      }
 
       const spaceAbove = y - headerOffset;
       const spaceBelow = screenHeight - (y + height) - bottomBarOffset;
@@ -115,13 +124,14 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
         }
       }
 
-      // Horizontal alignment: start near button left, clamp within screen boundaries
-      const popLeft = Math.max(12, Math.min(x, screenWidth - cardWidth - 12));
+      // Horizontal alignment: clamp within screen boundaries
+      const popLeft = Math.max(14, Math.min(x, screenWidth - cardWidth - 14));
 
       setPopoverPosition({ top: popTop, left: popLeft, width: cardWidth });
       setShowOptions(true);
     };
 
+    // 1. Web DOM measurement
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const domNode = moreBtnRef.current as any;
       if (domNode?.getBoundingClientRect) {
@@ -131,13 +141,32 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
       }
     }
 
-    if (moreBtnRef.current?.measureInWindow) {
-      moreBtnRef.current.measureInWindow((x, y, width, height) => {
-        calculateAndOpen(x, y, width, height);
-      });
-    } else {
-      setShowOptions(true);
+    // 2. React Native Native measurement (Android / iOS)
+    if (moreBtnRef.current) {
+      const target = moreBtnRef.current as any;
+      if (typeof target.measureInWindow === 'function') {
+        target.measureInWindow((x: number, y: number, width: number, height: number) => {
+          if (x > 0 || y > 0) {
+            calculateAndOpen(x, y, width, height);
+          } else if (typeof target.measure === 'function') {
+            target.measure((_fx: number, _fy: number, w: number, h: number, px: number, py: number) => {
+              calculateAndOpen(px, py, w, h);
+            });
+          } else {
+            calculateAndOpen(x, y, width, height);
+          }
+        });
+        return;
+      } else if (typeof target.measure === 'function') {
+        target.measure((_fx: number, _fy: number, w: number, h: number, px: number, py: number) => {
+          calculateAndOpen(px, py, w, h);
+        });
+        return;
+      }
     }
+
+    // 3. Fallback centering
+    calculateAndOpen(0, 0, 0, 0);
   };
 
   const isUser = message.role === 'user';
@@ -310,21 +339,22 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
 
               {/* Vertical More Button with Popover */}
               <Tooltip text="More options" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="left">
-                <TouchableOpacity
-                  ref={moreBtnRef}
-                  style={[
-                    styles.iconActionBtn,
-                    showOptions && { backgroundColor: colors.backgroundSecondary },
-                  ]}
-                  onPress={toggleOptions}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityLabel="More options"
-                >
-                  <MoreVertical
-                    color={showOptions ? colors.primary : colors.textMuted}
-                    size={15}
-                  />
-                </TouchableOpacity>
+                <View ref={moreBtnRef} collapsable={false}>
+                  <TouchableOpacity
+                    style={[
+                      styles.iconActionBtn,
+                      showOptions && { backgroundColor: colors.backgroundSecondary },
+                    ]}
+                    onPress={toggleOptions}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel="More options"
+                  >
+                    <MoreVertical
+                      color={showOptions ? colors.primary : colors.textMuted}
+                      size={15}
+                    />
+                  </TouchableOpacity>
+                </View>
               </Tooltip>
 
               {/* Responsive & Collision-Aware Floating Modal Popover */}
