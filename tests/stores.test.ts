@@ -45,6 +45,40 @@ describe('Zustand Stores & State Flow Tests', () => {
       expect(useAppStore.getState().isDrawerOpen).toBe(true);
     });
 
+    it('should manage sidebar width clamping, collapsing, and persistence', async () => {
+      // Clamping below MIN_WIDTH (220)
+      useAppStore.getState().setSidebarWidth(100);
+      expect(useAppStore.getState().sidebarWidth).toBe(220);
+
+      // Clamping above MAX_WIDTH (520)
+      useAppStore.getState().setSidebarWidth(800);
+      expect(useAppStore.getState().sidebarWidth).toBe(520);
+
+      // Normal width
+      useAppStore.getState().setSidebarWidth(320);
+      expect(useAppStore.getState().sidebarWidth).toBe(320);
+
+      // Non-persisting width update
+      useAppStore.getState().setSidebarWidth(340, false);
+      expect(useAppStore.getState().sidebarWidth).toBe(340);
+
+      // Collapsing
+      expect(useAppStore.getState().isSidebarCollapsed).toBe(false);
+      useAppStore.getState().setSidebarCollapsed(true);
+      expect(useAppStore.getState().isSidebarCollapsed).toBe(true);
+
+      // Toggling
+      useAppStore.getState().toggleSidebar();
+      expect(useAppStore.getState().isSidebarCollapsed).toBe(false);
+
+      // Batch saving state
+      await useAppStore.getState().saveSidebarState();
+      const savedWidth = await storage.getItem('uai_sidebar_width');
+      const savedCollapsed = await storage.getItem('uai_sidebar_collapsed');
+      expect(savedWidth).toBe('340');
+      expect(savedCollapsed).toBe('false');
+    });
+
     it('should create and switch active conversation', async () => {
       const conv = await useAppStore.getState().createConversation('E2E Test Session');
       expect(conv.id).toBeDefined();

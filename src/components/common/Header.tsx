@@ -238,7 +238,7 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       <View style={styles.right}>
-        {/* Quick Theme Toggle Icon (only on mobile/collapsible view, since TabletSidebar has its own theme toggle) */}
+        {/* Quick Theme Toggle Icon (only on mobile, since sidebar is present on larger screens) */}
         {!isMasterDetailSupported && (
           <Tooltip text={isDark ? "Switch to light mode" : "Switch to dark mode"} delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
             <TouchableOpacity
@@ -256,7 +256,7 @@ export const Header: React.FC<HeaderProps> = ({
           </Tooltip>
         )}
 
-        {/* New Chat Button (only shown when sidebar is collapsible / not in dual-pane mode) */}
+        {/* New Chat Button (only on mobile, since sidebar is present on larger screens) */}
         {showNewChat && !isMasterDetailSupported && (
           <Tooltip text="New chat" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
             <TouchableOpacity

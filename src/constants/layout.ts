@@ -21,3 +21,10 @@ export const POPOVER_CONFIG = {
   Z_INDEX: 9999,
   BACKDROP_Z_INDEX: 9998,
 } as const;
+
+export const SIDEBAR_CONFIG = {
+  DEFAULT_WIDTH: 280,
+  MIN_WIDTH: 220,
+  MAX_WIDTH: 520,
+  COLLAPSED_WIDTH: 60,
+} as const;

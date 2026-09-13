@@ -13,6 +13,7 @@ import {
   DEFAULT_CHAT_TITLE,
   UNTITLED_CHAT_TITLE,
   PROVIDER_DEFAULT_MODEL_IDS,
+  SIDEBAR_CONFIG,
 } from '../constants';
 import { pushConversationToUrl, replaceConversationInUrl } from '../utils/urlSync';
 import { ProviderFactory } from '../providers/providerFactory';
@@ -21,6 +22,8 @@ interface AppState {
   theme: 'dark' | 'light';
   activeTab: ActiveTab;
   isDrawerOpen: boolean;
+  sidebarWidth: number;
+  isSidebarCollapsed: boolean;
   activeConversationId: string | null;
   activeConversation: Conversation | null;
   activeProviderId: string;
@@ -42,6 +45,10 @@ interface AppState {
   setActiveTab: (tab: ActiveTab) => void;
   setDrawerOpen: (open: boolean) => void;
   toggleDrawer: () => void;
+  setSidebarWidth: (width: number, persist?: boolean) => void;
+  setSidebarCollapsed: (collapsed: boolean, persist?: boolean) => void;
+  toggleSidebar: () => void;
+  saveSidebarState: () => Promise<void>;
   setActiveConversationId: (id: string | null) => Promise<void>;
   setActiveProviderId: (id: string) => void;
   setActiveModelId: (id: string, providerId?: string) => void;
@@ -79,6 +86,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   theme: DEFAULT_THEME,
   activeTab: DEFAULT_ACTIVE_TAB,
   isDrawerOpen: false,
+  sidebarWidth: SIDEBAR_CONFIG.DEFAULT_WIDTH,
+  isSidebarCollapsed: false,
   activeConversationId: null,
   activeConversation: null,
   activeProviderId: DEFAULT_PROVIDER_ID,
@@ -106,6 +115,34 @@ export const useAppStore = create<AppState>((set, get) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
   setDrawerOpen: (open) => set({ isDrawerOpen: open }),
   toggleDrawer: () => set((state) => ({ isDrawerOpen: !state.isDrawerOpen })),
+  setSidebarWidth: (width, persist = true) => {
+    const clamped = Math.max(SIDEBAR_CONFIG.MIN_WIDTH, Math.min(SIDEBAR_CONFIG.MAX_WIDTH, Math.round(width)));
+    set({ sidebarWidth: clamped });
+    if (persist) {
+      storage.setItem('uai_sidebar_width', clamped.toString());
+    }
+  },
+  setSidebarCollapsed: (collapsed, persist = true) => {
+    set({ isSidebarCollapsed: collapsed });
+    if (persist) {
+      storage.setItem('uai_sidebar_collapsed', collapsed ? 'true' : 'false');
+    }
+  },
+  toggleSidebar: () => {
+    const next = !get().isSidebarCollapsed;
+    set({ isSidebarCollapsed: next });
+    storage.setItem('uai_sidebar_collapsed', next ? 'true' : 'false');
+  },
+  saveSidebarState: async () => {
+    try {
+      await Promise.all([
+        storage.setItem('uai_sidebar_width', get().sidebarWidth.toString()),
+        storage.setItem('uai_sidebar_collapsed', get().isSidebarCollapsed ? 'true' : 'false'),
+      ]);
+    } catch {
+      // Safe fallback if storage quota is exceeded or driver is unavailable
+    }
+  },
   setActiveConversationId: async (id) => {
     // Stop any in-flight generation so it never bleeds into another chat
     getChatStore()?.getState().stopGeneration();
@@ -312,10 +349,21 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   loadInitialData: async () => {
     const savedTheme = (await storage.getItem('uai_theme')) as 'dark' | 'light' | null;
+    const savedWidth = await storage.getItem('uai_sidebar_width');
+    const savedCollapsed = await storage.getItem('uai_sidebar_collapsed');
     const providers = await storage.getProviders();
     const conversations = await storage.getConversations();
     const storedDefaultProv = await storage.getDefaultProviderId();
     const storedDefaultMod = await storage.getDefaultModelId();
+
+    let sidebarWidth: number = SIDEBAR_CONFIG.DEFAULT_WIDTH;
+    if (savedWidth) {
+      const parsed = parseInt(savedWidth, 10);
+      if (!isNaN(parsed) && parsed >= SIDEBAR_CONFIG.MIN_WIDTH && parsed <= SIDEBAR_CONFIG.MAX_WIDTH) {
+        sidebarWidth = parsed;
+      }
+    }
+    const isSidebarCollapsed = savedCollapsed === 'true';
 
     // Validate stored default provider exists in list; fallback to first provider
     const validProvider = storedDefaultProv && providers.some((p) => p.id === storedDefaultProv);
@@ -343,6 +391,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({
       theme: savedTheme || DEFAULT_THEME,
+      sidebarWidth,
+      isSidebarCollapsed,
       providers,
       conversations,
       defaultProviderId: defaultProvider,
