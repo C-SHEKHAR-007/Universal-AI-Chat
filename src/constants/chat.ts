@@ -27,7 +27,7 @@ export interface ContextPresetOption {
 
 export const CONTEXT_PRESET_OPTIONS: ContextPresetOption[] = [
   { label: '2k', val: '2048' },
-  { label: '4k (Default)', val: '4096' },
+  { label: '4k', val: '4096' },
   { label: '8k', val: '8192' },
   { label: '16k', val: '16384' },
   { label: '32k', val: '32768' },

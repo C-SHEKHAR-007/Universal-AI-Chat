@@ -122,7 +122,6 @@ export const ChatScreen: React.FC = () => {
         }}
         showNewChat={hasMessages}
         onNewChat={handleNewChat}
-        onOptionsPress={() => setChatSettingsOpen(true)}
       />
 
       <View style={styles.chatArea}>

@@ -372,8 +372,22 @@ export const ChatSettingsModal: React.FC = () => {
             </View>
 
             {/* Context Window Presets */}
-            <View style={[styles.settingGroup, { marginTop: -6 }]}>
-              <Text style={[styles.groupLabel, { color: colors.textMuted, fontSize: 11 }]}>Presets</Text>
+            <View style={[styles.settingGroup, { marginTop: -4 }]}>
+              <View style={styles.labelValueRow}>
+                <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Presets</Text>
+                <Text
+                  style={[
+                    styles.valueBadge,
+                    {
+                      color: colors.primary,
+                      backgroundColor: colors.primaryMuted,
+                      fontSize: 10.5,
+                    },
+                  ]}
+                >
+                  4k (Default)
+                </Text>
+              </View>
               <View style={styles.sliderControlRow}>
                 {CONTEXT_PRESET_OPTIONS.map((preset) => {
                   const isSelected = contextWin === preset.val;
@@ -392,11 +406,13 @@ export const ChatSettingsModal: React.FC = () => {
                         },
                       ]}
                       onPress={() => setContextWin(preset.val)}
+                      activeOpacity={0.7}
                     >
                       <Text
+                        numberOfLines={1}
                         style={[
                           styles.stepperChipText,
-                          { color: isSelected ? '#fff' : colors.textSecondary, fontSize: 11 },
+                          { color: isSelected ? '#fff' : colors.textSecondary },
                           isSelected && styles.stepperChipTextActive,
                         ]}
                       >
@@ -564,18 +580,25 @@ const styles = StyleSheet.create({
   },
   sliderControlRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 6,
   },
   stepperChip: {
     flex: 1,
-    paddingVertical: 8,
+    height: 36,
+    minWidth: 0,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: borderRadius.md,
     borderWidth: 1,
+    paddingHorizontal: 2,
   },
   stepperChipText: {
-    fontSize: typography.size.xs,
+    fontSize: 12,
     fontWeight: typography.weight.medium,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   stepperChipTextActive: {
     fontWeight: typography.weight.bold,
@@ -696,19 +719,24 @@ const styles = StyleSheet.create({
   contextPresetsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 6,
     marginTop: 4,
   },
   presetChip: {
     flex: 1,
+    height: 30,
+    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 5,
     borderRadius: borderRadius.sm,
     borderWidth: 1,
+    paddingHorizontal: 2,
   },
   presetChipText: {
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: typography.weight.bold,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
 });

@@ -223,14 +223,6 @@ export const MobileDrawer: React.FC = () => {
                   }}
                   activeOpacity={0.7}
                 >
-                  {conv.isPinned ? (
-                    <Pin color={colors.warning} size={15} />
-                  ) : (
-                    <MessageSquare
-                      color={isSelected ? colors.primary : colors.textMuted}
-                      size={15}
-                    />
-                  )}
                   {isItemEditing ? (
                     <View style={styles.drawerEditRow}>
                       <TextInput
@@ -239,7 +231,8 @@ export const MobileDrawer: React.FC = () => {
                           {
                             color: colors.textPrimary,
                             backgroundColor: colors.backgroundSecondary,
-                            borderColor: colors.primary,
+                            borderWidth: 0,
+                            borderColor: 'transparent',
                           },
                         ]}
                         value={editingTitle}
@@ -247,24 +240,33 @@ export const MobileDrawer: React.FC = () => {
                         autoFocus
                         onSubmitEditing={handleSaveDrawerEdit}
                         returnKeyType="done"
+                        underlineColorAndroid="transparent"
                       />
                       <TouchableOpacity
                         onPress={handleSaveDrawerEdit}
                         style={[styles.drawerActionBtn, { backgroundColor: colors.primary }]}
-                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
-                        <Check color="#fff" size={12} />
+                        <Check color="#fff" size={13} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => setEditingId(null)}
-                        style={[styles.drawerActionBtn, { backgroundColor: colors.backgroundSecondary }]}
-                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        style={[styles.drawerActionBtn, { backgroundColor: colors.cardHover }]}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
-                        <X color={colors.textSecondary} size={12} />
+                        <X color={colors.textSecondary} size={13} />
                       </TouchableOpacity>
                     </View>
                   ) : (
                     <>
+                      {conv.isPinned ? (
+                        <Pin color={colors.warning} size={15} />
+                      ) : (
+                        <MessageSquare
+                          color={isSelected ? colors.primary : colors.textMuted}
+                          size={15}
+                        />
+                      )}
                       <Text
                         style={[
                           styles.chatTitle,
@@ -640,21 +642,28 @@ const styles = StyleSheet.create({
   },
   drawerEditRow: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   drawerInlineInput: {
     flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
     height: 30,
     borderRadius: borderRadius.sm,
-    borderWidth: 1,
+    borderWidth: 0,
+    borderColor: 'transparent',
     paddingHorizontal: 8,
     fontSize: typography.size.sm,
+    outlineStyle: 'none' as any,
+    boxShadow: 'none' as any,
   },
   drawerActionBtn: {
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
+    flexShrink: 0,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',

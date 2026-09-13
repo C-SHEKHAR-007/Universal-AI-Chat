@@ -165,7 +165,8 @@ export const ConversationsScreen: React.FC = () => {
                         {
                           color: colors.textPrimary,
                           backgroundColor: colors.backgroundSecondary,
-                          borderColor: colors.primary,
+                          borderWidth: 0,
+                          borderColor: 'transparent',
                         },
                       ]}
                       value={editingTitle}
@@ -173,6 +174,7 @@ export const ConversationsScreen: React.FC = () => {
                       autoFocus
                       onSubmitEditing={() => handleSaveEdit(conv.id)}
                       returnKeyType="done"
+                      underlineColorAndroid="transparent"
                     />
                     <TouchableOpacity
                       onPress={() => handleSaveEdit(conv.id)}
@@ -624,9 +626,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 34,
     borderRadius: borderRadius.sm,
-    borderWidth: 1,
+    borderWidth: 0,
+    borderColor: 'transparent',
     paddingHorizontal: 8,
     fontSize: typography.size.sm,
+    outlineStyle: 'none' as any,
+    boxShadow: 'none' as any,
   },
   smallActionBtn: {
     width: 28,

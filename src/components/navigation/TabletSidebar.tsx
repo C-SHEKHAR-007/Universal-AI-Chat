@@ -124,14 +124,6 @@ export const TabletSidebar: React.FC = () => {
           }
         }}
       >
-        {conv.isPinned ? (
-          <Pin color={colors.warning} size={15} />
-        ) : (
-          <MessageSquare
-            color={isSelected ? colors.primary : colors.textMuted}
-            size={15}
-          />
-        )}
         {isItemEditing ? (
           <View style={styles.sidebarEditRow}>
             <TextInput
@@ -140,7 +132,8 @@ export const TabletSidebar: React.FC = () => {
                 {
                   color: colors.textPrimary,
                   backgroundColor: colors.backgroundSecondary,
-                  borderColor: colors.primary,
+                  borderWidth: 0,
+                  borderColor: 'transparent',
                 },
               ]}
               value={editingTitle}
@@ -148,24 +141,33 @@ export const TabletSidebar: React.FC = () => {
               autoFocus
               onSubmitEditing={handleSaveSidebarEdit}
               returnKeyType="done"
+              underlineColorAndroid="transparent"
             />
             <TouchableOpacity
               onPress={handleSaveSidebarEdit}
               style={[styles.sidebarActionBtn, { backgroundColor: colors.primary }]}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Check color="#fff" size={12} />
+              <Check color="#fff" size={13} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setEditingId(null)}
-              style={[styles.sidebarActionBtn, { backgroundColor: colors.backgroundSecondary }]}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              style={[styles.sidebarActionBtn, { backgroundColor: colors.cardHover }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <X color={colors.textSecondary} size={12} />
+              <X color={colors.textSecondary} size={13} />
             </TouchableOpacity>
           </View>
         ) : (
           <>
+            {conv.isPinned ? (
+              <Pin color={colors.warning} size={15} />
+            ) : (
+              <MessageSquare
+                color={isSelected ? colors.primary : colors.textMuted}
+                size={15}
+              />
+            )}
             <Text
               style={[
                 styles.chatTitle,
@@ -614,9 +616,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 26,
     borderRadius: borderRadius.sm,
-    borderWidth: 1,
+    borderWidth: 0,
+    borderColor: 'transparent',
     paddingHorizontal: 6,
     fontSize: typography.size.xs,
+    outlineStyle: 'none' as any,
+    boxShadow: 'none' as any,
   },
   sidebarActionBtn: {
     width: 22,
