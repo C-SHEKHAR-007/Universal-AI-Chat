@@ -17,9 +17,11 @@ import { spacing, typography, borderRadius } from '../../theme/tokens';
 import { useTheme } from '../../theme/useTheme';
 import { StreamingCursor } from './StreamingCursor';
 import { CodeBlock } from './CodeBlock';
+import { ThinkingProcessBlock } from './ThinkingProcessBlock';
 
 export { StreamingCursor } from './StreamingCursor';
 export { CodeBlock } from './CodeBlock';
+export { ThinkingProcessBlock } from './ThinkingProcessBlock';
 
 export interface MarkdownRendererProps {
   content: string;
@@ -292,6 +294,25 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
               }
 
               const isAlertAtEndOfPart = isStreaming && isLastPart && i > lastNonEmptyLineIdx;
+
+              const isThinkingProcess =
+                remainingFirstLine.trim().toLowerCase().includes('thinking') ||
+                remainingFirstLine.trim().toLowerCase().includes('thought') ||
+                alertType === 'THINKING';
+
+              if (isThinkingProcess) {
+                const thinkingBody = quoteLines.slice(1);
+                elements.push(
+                  <ThinkingProcessBlock
+                    key={`think_${pIdx}_${i}`}
+                    title={remainingFirstLine.trim() || 'Thinking Process'}
+                    bodyLines={thinkingBody.length > 0 ? thinkingBody : ['...']}
+                    isThinkingActive={isAlertAtEndOfPart}
+                    renderInline={renderInline}
+                  />
+                );
+                continue;
+              }
 
               elements.push(
                 <View

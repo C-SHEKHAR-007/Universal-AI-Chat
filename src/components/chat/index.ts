@@ -5,4 +5,4 @@ export * from './MarkdownRenderer';
 export * from './MessageBubble';
 export * from './StreamingCursor';
 export * from './CodeBlock';
-
+export * from './ThinkingProcessBlock';
