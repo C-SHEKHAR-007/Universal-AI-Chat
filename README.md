@@ -1,118 +1,219 @@
 # Universal AI Chat 🚀
 
-A high-performance, responsive AI Chat client built with **React Native + Expo**, designed to connect seamlessly to local models via **Ollama**, custom **OpenAI-compatible servers** (vLLM, LM Studio, LiteLLM), and cloud APIs.
+<p align="center">
+  <img src="Plan/ChatGPT%20Image%20Sep%2012,%202026,%2001_03_30%20PM.png" alt="Universal AI Chat Preview" width="800" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);" />
+</p>
 
-![Universal AI Reference](Plan/ChatGPT%20Image%20Sep%2012,%202026,%2001_03_30%20PM.png)
+<p align="center">
+  <strong>A modern, privacy-first, cross-platform AI chat workstation built for local LLMs and cloud intelligence.</strong>
+</p>
+
+<p align="center">
+  <a href="#-key-features"><img src="https://img.shields.io/badge/Platform-Web%20%7C%20Android%20%7C%20iOS%20%7C%20Desktop-blue?style=flat-square" alt="Platforms" /></a>
+  <a href="#-tech-stack"><img src="https://img.shields.io/badge/Built%20With-React%20Native%20%2B%20Expo-61DAFB?style=flat-square&logo=react" alt="React Native Expo" /></a>
+  <a href="#-tech-stack"><img src="https://img.shields.io/badge/Language-TypeScript%205-3178C6?style=flat-square&logo=typescript" alt="TypeScript" /></a>
+  <a href="#-license"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License: MIT" /></a>
+  <a href="#-local-first--privacy"><img src="https://img.shields.io/badge/Privacy-100%25%20Local%20%26%20Zero%20Tracking-orange?style=flat-square" alt="Zero Telemetry" /></a>
+</p>
+
+---
+
+## 📖 Overview
+
+**Universal AI Chat** is a developer-grade, privacy-centric AI interface designed to bridge local LLM execution environments (**Ollama**, **LM Studio**, **vLLM**, **llama.cpp**, **LocalAI**) and cloud providers (**OpenAI**, **OpenRouter**, **Groq**, **Together**, **Custom Endpoints**) under a single unified experience.
+
+Built from the ground up for high responsiveness and fluid multi-device adaptation, it offers 60+ FPS adaptive master-detail layouts on tablets/desktops, compact slide-out mobile drawers, real-time token telemetry dashboards, and per-chat context controls.
 
 ---
 
 ## 🌟 Key Features
 
-1. **Multi-Provider Architecture (`AIProvider`)**
-   - 🖥️ **Local Ollama**: Connect to `http://localhost:11434` or over your local Wi-Fi/LAN `http://192.168.x.x:11434`.
-   - ☁️ **OpenAI Compatible**: Connect to any OpenAI-compatible endpoint (OpenAI, vLLM, LM Studio, OpenRouter, Groq, Together).
-   - 🌐 **Custom Endpoints**: Extensible provider interface with zero UI coupling.
+### 🔌 Multi-Provider & Model Agnostic
+- **Local AI Engines**: Direct native connection to local instances (`http://localhost:11434`, `http://192.168.x.x:11434`, or LAN endpoints).
+- **OpenAI-Compatible APIs**: Plug in vLLM, LM Studio, LiteLLM, Groq, OpenRouter, Together AI, or your private enterprise proxies with custom base URLs and headers.
+- **Dynamic Model Auto-Discovery**: Automatic fetching of available models from Ollama and OpenAI-compatible `/v1/models` endpoints.
+- **Independent Model Presets**: Per-conversation model selection with individual parameter overrides (Temperature, Top-P, Context Window, Max Tokens, Custom System Prompts).
 
-2. **Adaptive Master-Detail Responsive UI**
-   - 📱 **Mobile Portrait (<600dp)**: Single-pane view with slide-out drawer and bottom navigation tabs.
-   - 📱 **Mobile Landscape / Foldable (600–900dp)**: Compact chat pane with adaptive toolbar.
-   - 🖥️ **Tablet Landscape (>900dp)**: Dual-pane master-detail sidebar with persistent conversation list and chat surface.
+### 🖥️ Adaptive & Draggable Workspace
+- **Fluid Multi-Device Layouts**:
+  - 📱 **Mobile (< 600px)**: Compact single-pane layout with bottom tab bar, slide-out drawer, and full-screen conversation view.
+  - 📱 **Mobile Landscape (< 768px)**: Optimized full-width screen preventing cramped horizontal views.
+  - 🖥️ **Tablet & Desktop (≥ 768px)**: Adaptive dual-pane workspace with live resizable master-detail sidebar.
+- **Draggable & Stretchable Sidebar**:
+  - Smooth 60+ FPS unthrottled dragging (`220px` to `520px`).
+  - One-click snap into a **`60px` Minimal Icon Rail** for maximum chat surface area.
+  - Remembers your custom stretched width when collapsing and re-expanding.
+- **Unified Controls**: Consolidated footer docking Settings and Dark/Light theme toggles.
 
-3. **Live Token Speed & Latency Telemetry**
-   - ⚡ **Time to First Token (TTFT)** in seconds/ms.
-   - 📊 **Real-time generation speed** in `tokens/sec` with live status badge.
-   - 📈 **Dedicated Performance & Benchmark Dashboard** with historical comparison across models (Qwen, Gemma, Llama, GPT-OSS).
+### ⚡ Live Generation Telemetry & Performance
+- **Real-Time Speed Measurement**: Live generation speed in `tokens/sec` with status indicators.
+- **Time to First Token (TTFT)**: Precise latency measurement from request dispatch to the initial token stream.
+- **Telemetry & Benchmark Dashboard**: Track historical generation speeds, token consumption, context usage, and compare model throughput across Qwen, Llama, DeepSeek, Gemma, and Mistral.
 
-4. **Rich ChatGPT-Grade Chat Experience**
-   - Formatted Markdown rendering with bullet lists and headers.
-   - Syntax-highlighted code blocks with language badge and one-tap **Copy Code**.
-   - Immediate **Stop Generation** via AbortController.
-   - Prompt suggestion cards on empty chat (*Explain something*, *Write code*, *Analyze data*, *Learn something*).
-   - Conversation management: Search, grouped date buckets (Today, Yesterday, Earlier), Pin, Delete.
+### 💬 Rich Chat Experience
+- **Markdown & Syntax Highlighting**: Full Markdown parsing with code blocks, language badges, and one-tap **Copy Code**.
+- **Message Branching & Editing**: Rewind, edit previous prompts, resend, or clear chat history non-destructively.
+- **Context Window Protection**: Automatic context estimation and pair-preserving sliding window pruning to avoid out-of-memory crashes on local CPU/GPU setups.
+- **Zero Lock-In Storage**: Universal storage engine with full export and offline capability.
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Tech Stack
 
-### 1. Prerequisites
-- Node.js (v18+) or Bun
-- Expo CLI (`npx expo`)
-- (Optional) [Ollama](https://ollama.com/) running on your computer or local network.
+| Layer | Technology |
+| :--- | :--- |
+| **Framework** | [React Native](https://reactnative.dev/) / [Expo SDK 54](https://expo.dev/) |
+| **Language** | [TypeScript 5](https://www.typescriptlang.org/) (Strict Mode) |
+| **State Management** | [Zustand](https://github.com/pmndrs/zustand) (Modular persistent stores) |
+| **Icons** | [Lucide Icons](https://lucide.dev/) (`lucide-react-native`) |
+| **Styling & Design** | Pure tokenized design system (Light/Dark themes, high contrast, responsive breakpoints) |
+| **Testing & Runner** | [Bun Test](https://bun.sh/) (60+ unit, integration, and E2E simulation tests) |
 
-### 2. Run the Application
+---
 
+## 🚀 Quick Start
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18+) or [Bun](https://bun.sh/)
+- [Expo CLI](https://docs.expo.dev/get-started/installation/) (`npx expo`)
+- (Optional) [Ollama](https://ollama.com/) or [LM Studio](https://lmstudio.ai/) running locally.
+
+### 1. Clone the Repository
 ```bash
-# Start the Expo development server
+git clone https://github.com/your-org/universal-ai-chat.git
+cd universal-ai-chat
+```
+
+### 2. Install Dependencies
+```bash
+# Using Bun (Recommended)
+bun install
+
+# Or using npm
+npm install
+```
+
+### 3. Start the Development Server
+```bash
+# Start Metro bundler
 npx expo start
 
-# Run in Web Browser
+# Run directly in web browser
 npm run web
-# or: npx expo start --web
 
-# Run on Android Device / Emulator
+# Run on Android device / emulator
 npm run android
-# or: npx expo start --android
+
+# Run on iOS simulator (macOS required)
+npm run ios
 ```
 
 ---
 
-## 🔌 Connecting to Ollama
+## 🔌 Provider Setup Guides
 
-1. Start Ollama with open CORS and network binding (if connecting from an Android phone over Wi-Fi):
+### Connecting to Local Ollama
+1. Start Ollama with network binding enabled (for Wi-Fi / Android testing):
    ```bash
    OLLAMA_HOST=0.0.0.0:11434 ollama serve
    ```
-2. Pull your favorite model:
+2. Pull your desired models:
    ```bash
    ollama pull qwen2.5:7b
-   # or
    ollama pull llama3.2:3b
+   ollama pull deepseek-r1:8b
    ```
-3. In the Universal AI app:
-   - Go to **Providers** (`+ Add Provider`)
-   - Type: **Ollama**
-   - Base URL: `http://192.168.1.xxx:11434` (or `http://10.0.2.2:11434` for Android Emulator)
-   - Click **Test Connection** (verify latency and discovered models)
-   - Click **Save Provider**.
+3. In Universal AI Chat:
+   - Open **Models & Providers** -> click **+ Add Provider**.
+   - Select **Ollama**.
+   - Enter your host:
+     - Web / Desktop: `http://localhost:11434`
+     - Android Device over Wi-Fi: `http://192.168.1.xxx:11434`
+     - Android Emulator: `http://10.0.2.2:11434`
+   - Click **Test Connection** -> **Save Provider**.
+
+### Connecting to LM Studio / vLLM / LiteLLM
+1. Start local server in LM Studio (default port `1234`) or vLLM (`8000`).
+2. In Universal AI Chat:
+   - Select **OpenAI Compatible**.
+   - Base URL: `http://localhost:1234/v1` (or `http://localhost:8000/v1`).
+   - Click **Fetch Models** and save.
+
+### Connecting to Cloud Providers (OpenAI, OpenRouter, Groq)
+1. Add a new **OpenAI Compatible** provider.
+2. Provide the Base URL and API Key:
+   - **OpenRouter**: `https://openrouter.ai/api/v1`
+   - **Groq**: `https://api.groq.com/openai/v1`
+   - **OpenAI**: `https://api.openai.com/v1`
+3. Hit **Fetch Models** to automatically populate available remote models.
 
 ---
 
-## 🏗️ Project Architecture
+## 📁 Repository Structure
 
 ```
-universal-ai-chat/
+.
 ├── src/
 │   ├── components/
-│   │   ├── chat/          # EmptyChatState, MessageBubble, ChatInputBar
-│   │   ├── navigation/    # MobileDrawer, BottomTabBar, TabletSidebar, Header
-│   │   └── modals/        # ModelSelectorModal, ChatSettingsModal, AddProviderModal
-│   ├── providers/
-│   │   ├── AIProvider.ts  # Common interface
-│   │   ├── OllamaProvider.ts
-│   │   ├── OpenAICompatibleProvider.ts
-│   │   └── providerFactory.ts
-│   ├── screens/
-│   │   ├── ChatScreen.tsx
-│   │   ├── ConversationsScreen.tsx
-│   │   ├── ProvidersScreen.tsx
-│   │   ├── PerformanceScreen.tsx
-│   │   └── SettingsScreen.tsx
-│   ├── storage/
-│   │   └── storageAdapter.ts # Universal persistence & seed data
-│   ├── store/
-│   │   ├── appStore.ts    # Global state (active tab, model, provider)
-│   │   └── chatStore.ts   # Streaming, messages, speed metrics
-│   ├── theme/
-│   │   └── tokens.ts      # Dark charcoal palette & typography
-│   ├── types/
-│   │   └── index.ts       # Strict TypeScript definitions
-│   └── hooks/
-│       └── useResponsive.ts # Phone / Tablet layout detection
-├── App.tsx                # Master responsive entry
-└── package.json
+│   │   ├── chat/             # MessageBubble, ChatInputBar, EmptyChatState, SuggestionCards
+│   │   ├── common/           # Header, Tooltip, DropdownMenu, Button, Badges
+│   │   ├── navigation/       # TabletSidebar, MobileDrawer, BottomTabBar
+│   │   └── modals/           # ModelSelectorModal, ChatSettingsModal, AddProviderModal
+│   ├── constants/            # Layout, breakpoints, default models & system parameters
+│   ├── hooks/                # useResponsive, useKeyboard, useTheme hooks
+│   ├── providers/            # AIProvider interface, OllamaProvider, OpenAICompatibleProvider
+│   ├── screens/              # ChatScreen, ConversationsScreen, ProvidersScreen, PerformanceScreen
+│   ├── services/             # ContextManager, TokenCalculator, TitleGenerator, Benchmarks
+│   ├── storage/              # Universal storage drivers (Memory, WebStorage, NativeAsync)
+│   ├── store/                # Zustand stores (appStore, chatStore)
+│   ├── theme/                # Design tokens, color palettes, dark/light definitions
+│   └── types/                # Strict TypeScript interfaces & schemas
+├── tests/                    # E2E simulations, store flows, token calculators & driver tests
+├── App.tsx                   # Main responsive application entry
+├── app.json                  # Expo application configuration
+├── package.json              # Dependencies and scripts
+└── tsconfig.json             # TypeScript compiler configuration
 ```
+
+---
+
+## 🧪 Testing & Validation
+
+Universal AI Chat includes a suite of automated tests covering stores, streaming pipelines, context management, and persistence drivers:
+
+```bash
+# Run all unit and integration tests
+bun test
+
+# Type-check TypeScript codebase
+node --stack-size=8192 ./node_modules/typescript/bin/tsc --noEmit
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions, feature proposals, and bug reports are welcome!
+
+1. **Fork the repository**
+2. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **Commit your changes**:
+   ```bash
+   git commit -m "feat: add amazing feature"
+   ```
+4. **Push to the branch**:
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+5. **Open a Pull Request**
+
+Please ensure all tests pass (`bun test`) before submitting pull requests.
 
 ---
 
 ## 📄 License
-MIT License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
