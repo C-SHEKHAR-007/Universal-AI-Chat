@@ -14,6 +14,8 @@ import {
 } from '../constants';
 import { IStorageDriver } from './drivers/IStorageDriver';
 import { WebStorageDriver } from './drivers/WebStorageDriver';
+import { NativeAsyncStorageDriver } from './drivers/NativeAsyncStorageDriver';
+import { MemoryStorageDriver } from './drivers/MemoryStorageDriver';
 
 export {
   STORAGE_KEYS,
@@ -22,11 +24,18 @@ export {
   DEFAULT_BENCHMARKS,
 };
 
+export function createDefaultStorageDriver(): IStorageDriver {
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    return new WebStorageDriver();
+  }
+  return new NativeAsyncStorageDriver();
+}
+
 export class UniversalStorage {
   private driver: IStorageDriver;
 
   constructor(driver?: IStorageDriver) {
-    this.driver = driver || new WebStorageDriver();
+    this.driver = driver || createDefaultStorageDriver();
   }
 
   /**

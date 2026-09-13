@@ -47,9 +47,9 @@ export const ChatScreen: React.FC = () => {
 
   const keyboardBehavior = Platform.select({
     ios: 'padding',
-    android: 'height',
+    android: undefined,
     default: undefined,
-  }) as 'padding' | 'height' | undefined;
+  }) as 'padding' | undefined;
 
   // Auto-scroll to bottom when keyboard opens so active chat messages stay in view
   useEffect(() => {

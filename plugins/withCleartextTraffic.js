@@ -10,13 +10,6 @@ const NETWORK_SECURITY_CONFIG_CONTENT = `<?xml version="1.0" encoding="utf-8"?>
             <certificates src="user" />
         </trust-anchors>
     </base-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
-        <domain includeSubdomains="true">10.0.2.2</domain>
-        <domain includeSubdomains="true">192.168.1.1</domain>
-        <domain includeSubdomains="true">192.168.0.1</domain>
-    </domain-config>
 </network-security-config>
 `;
 

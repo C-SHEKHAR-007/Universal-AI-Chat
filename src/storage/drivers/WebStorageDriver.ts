@@ -6,7 +6,7 @@ export class WebStorageDriver implements IStorageDriver {
 
   private isLocalStorageAvailable(): boolean {
     try {
-      if (typeof localStorage === 'undefined') return false;
+      if (typeof window === 'undefined' || typeof localStorage === 'undefined') return false;
       const testKey = '__storage_test__';
       localStorage.setItem(testKey, '1');
       localStorage.removeItem(testKey);

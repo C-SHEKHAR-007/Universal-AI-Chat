@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'bun:test';
 import { MemoryStorageDriver } from '../src/storage/drivers/MemoryStorageDriver';
 import { WebStorageDriver } from '../src/storage/drivers/WebStorageDriver';
+import { NativeAsyncStorageDriver } from '../src/storage/drivers/NativeAsyncStorageDriver';
 import { UniversalStorage } from '../src/storage/storageAdapter';
 
 describe('Storage Drivers Unit Tests', () => {
@@ -30,5 +31,17 @@ describe('Storage Drivers Unit Tests', () => {
     const webDriver = new WebStorageDriver();
     await webDriver.setItem('fallback_key', 'fallback_val');
     expect(await webDriver.getItem('fallback_key')).toBe('fallback_val');
+  });
+
+  it('NativeAsyncStorageDriver should store and retrieve items with fallback support', async () => {
+    const nativeDriver = new NativeAsyncStorageDriver();
+    await nativeDriver.setItem('native_key', 'native_val');
+    expect(await nativeDriver.getItem('native_key')).toBe('native_val');
+
+    const allKeys = await nativeDriver.getAllKeys();
+    expect(allKeys).toContain('native_key');
+
+    await nativeDriver.removeItem('native_key');
+    expect(await nativeDriver.getItem('native_key')).toBeNull();
   });
 });

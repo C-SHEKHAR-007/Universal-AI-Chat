@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, StatusBar, Keyboard, Platform } from 'react-native';
+import { StyleSheet, View, StatusBar, Keyboard, Platform, BackHandler } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useTheme } from './src/theme/useTheme';
 import { useResponsive } from './src/hooks/useResponsive';
@@ -52,10 +52,39 @@ export default function App() {
       () => setIsKeyboardOpen(false)
     );
 
+    // Android Hardware / Gesture Back Button Handler
+    const handleHardwareBack = () => {
+      const state = useAppStore.getState();
+      if (state.isModelSelectorOpen) {
+        state.setModelSelectorOpen(false);
+        return true;
+      }
+      if (state.isChatSettingsOpen) {
+        state.setChatSettingsOpen(false);
+        return true;
+      }
+      if (state.isAddProviderOpen) {
+        state.setAddProviderOpen(false);
+        return true;
+      }
+      if (state.isDrawerOpen) {
+        state.setDrawerOpen(false);
+        return true;
+      }
+      if (state.activeTab !== 'chat') {
+        state.setActiveTab('chat');
+        return true;
+      }
+      return false; // Exit app if already at root chat with no open modals
+    };
+
+    const backSub = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
+
     return () => {
       unsubscribeUrl();
       showSub.remove();
       hideSub.remove();
+      backSub.remove();
     };
   }, []);
 
