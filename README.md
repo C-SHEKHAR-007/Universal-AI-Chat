@@ -1,7 +1,7 @@
 # Universal AI Chat 🚀
 
 <p align="center">
-  <img src="Plan/ChatGPT%20Image%20Sep%2012,%202026,%2001_03_30%20PM.png" alt="Universal AI Chat Preview" width="800" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);" />
+  <img src="assets/preview.png" alt="Universal AI Chat Preview" width="800" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);" />
 </p>
 
 <p align="center">

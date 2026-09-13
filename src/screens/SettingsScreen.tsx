@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -17,21 +18,33 @@ import {
   Trash2,
   Download,
   CheckCircle2,
+  User,
+  Sparkles,
 } from 'lucide-react-native';
 import { spacing, typography, borderRadius } from '../theme/tokens';
 import { useTheme } from '../theme/useTheme';
 import { Header } from '../components/common/Header';
+import { DeveloperModal } from '../components/modals/DeveloperModal';
 import { useAppStore } from '../store/appStore';
 import { useChatStore } from '../store/chatStore';
 import { storage } from '../storage/storageAdapter';
-import { APP_NAME, APP_VERSION, APP_SUBTITLE, TOAST_DURATION_MS } from '../constants';
+import {
+  APP_NAME,
+  APP_VERSION,
+  APP_SUBTITLE,
+  TOAST_DURATION_MS,
+  DEVELOPER_CONFIG,
+} from '../constants';
 import { copyToClipboard } from '../utils';
+
+const DEVELOPER_AVATAR = require('../../assets/developer.jpg');
 
 export const SettingsScreen: React.FC = () => {
   const { colors, isDark, toggleTheme } = useTheme();
   const [streamStats, setStreamStats] = useState(true);
   const [clearedMsg, setClearedMsg] = useState(false);
   const [backupMsg, setBackupMsg] = useState(false);
+  const [isDevModalOpen, setIsDevModalOpen] = useState(false);
   const { loadInitialData, setActiveConversationId } = useAppStore();
 
   const handleClearHistory = async () => {
@@ -184,10 +197,11 @@ export const SettingsScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* About Group */}
+        {/* About & Developer Group */}
         <View style={styles.group}>
-          <Text style={[styles.groupHeader, { color: colors.textMuted }]}>ABOUT</Text>
+          <Text style={[styles.groupHeader, { color: colors.textMuted }]}>ABOUT & DEVELOPER</Text>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            {/* App Info Row */}
             <View style={styles.row}>
               <View style={styles.rowLeft}>
                 <Info color={colors.textSecondary} size={20} />
@@ -202,9 +216,53 @@ export const SettingsScreen: React.FC = () => {
               </View>
               <Text style={[styles.tagVersion, { color: colors.textMuted }]}>v{APP_VERSION}</Text>
             </View>
+
+            <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+
+            {/* Developer Profile Row with Info Icon */}
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => setIsDevModalOpen(true)}
+              activeOpacity={0.7}
+              accessibilityLabel="View Developer Details"
+            >
+              <View style={styles.rowLeft}>
+                <View style={[styles.devAvatarMini, { backgroundColor: colors.primaryMuted, borderColor: colors.borderLight }]}>
+                  <Image
+                    source={DEVELOPER_AVATAR}
+                    style={styles.devAvatarImage}
+                    resizeMode="cover"
+                  />
+                </View>
+                <View>
+                  <View style={styles.devNameRow}>
+                    <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
+                      Developer
+                    </Text>
+                    <View style={[styles.authorBadge, { backgroundColor: colors.primaryMuted }]}>
+                      <Sparkles color={colors.primary} size={11} />
+                      <Text style={[styles.authorBadgeText, { color: colors.primary }]}>Creator</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
+                    {DEVELOPER_CONFIG.NAME}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={[styles.infoBtnCircle, { backgroundColor: colors.backgroundSecondary }]}>
+                <Info color={colors.primary} size={17} />
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
+
+      {/* Developer Profile & Social Modal */}
+      <DeveloperModal
+        visible={isDevModalOpen}
+        onClose={() => setIsDevModalOpen(false)}
+      />
     </View>
   );
 };
@@ -273,5 +331,43 @@ const styles = StyleSheet.create({
   tagVersion: {
     fontSize: 11,
     fontWeight: typography.weight.medium,
+  },
+  devAvatarMini: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  devAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
+  },
+  devNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  authorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: borderRadius.full,
+  },
+  authorBadgeText: {
+    fontSize: 10,
+    fontWeight: typography.weight.bold,
+  },
+  infoBtnCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
