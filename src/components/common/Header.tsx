@@ -238,23 +238,26 @@ export const Header: React.FC<HeaderProps> = ({
       </View>
 
       <View style={styles.right}>
-        {/* Quick Theme Toggle Icon */}
-        <Tooltip text={isDark ? "Switch to light mode" : "Switch to dark mode"} delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
-          <TouchableOpacity
-            onPress={toggleTheme}
-            style={styles.iconButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityLabel="Toggle Dark/Light Mode"
-          >
-            {isDark ? (
-              <Sun color={colors.warning} size={19} />
-            ) : (
-              <Moon color={colors.primary} size={19} />
-            )}
-          </TouchableOpacity>
-        </Tooltip>
+        {/* Quick Theme Toggle Icon (only on mobile/collapsible view, since TabletSidebar has its own theme toggle) */}
+        {!isMasterDetailSupported && (
+          <Tooltip text={isDark ? "Switch to light mode" : "Switch to dark mode"} delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
+            <TouchableOpacity
+              onPress={toggleTheme}
+              style={styles.iconButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Toggle Dark/Light Mode"
+            >
+              {isDark ? (
+                <Sun color={colors.warning} size={19} />
+              ) : (
+                <Moon color={colors.primary} size={19} />
+              )}
+            </TouchableOpacity>
+          </Tooltip>
+        )}
 
-        {showNewChat && (
+        {/* New Chat Button (only shown when sidebar is collapsible / not in dual-pane mode) */}
+        {showNewChat && !isMasterDetailSupported && (
           <Tooltip text="New chat" delay={TOOLTIP_CONFIG.DEFAULT_DELAY_MS} align="right">
             <TouchableOpacity
               onPress={onNewChat}
