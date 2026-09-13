@@ -182,8 +182,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     parseableContent = content + '\n```';
   }
 
-  // Split by code blocks
-  const parts = parseableContent.split(/(```[\s\S]*?```)/g);
+  // Split by code blocks and remove empty segments so trailing parts are accurate
+  const rawParts = parseableContent.split(/(```[\s\S]*?```)/g);
+  const parts = rawParts.filter((p) => p.length > 0);
 
   return (
     <View style={styles.container}>
@@ -290,6 +291,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 alertLabel = 'Caution';
               }
 
+              const isAlertAtEndOfPart = isStreaming && isLastPart && i > lastNonEmptyLineIdx;
+
               elements.push(
                 <View
                   key={`alert_${pIdx}_${i}`}
@@ -313,13 +316,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                       style={[styles.alertText, { color: colors.textPrimary }]}
                     >
                       {renderInline(bLine, [styles.alertText, { color: colors.textPrimary }])}
-                      {isStreaming && isLastPart && bIdx === alertBodyLines.length - 1 && <StreamingCursor />}
+                      {isAlertAtEndOfPart && bIdx === alertBodyLines.length - 1 && <StreamingCursor />}
                     </Text>
                   ))}
                 </View>
               );
             } else {
               // Standard Blockquote
+              const isBlockquoteAtEndOfPart = isStreaming && isLastPart && i > lastNonEmptyLineIdx;
+
               elements.push(
                 <View
                   key={`bq_${pIdx}_${i}`}
@@ -337,7 +342,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                       style={[styles.blockquoteText, { color: colors.textSecondary }]}
                     >
                       {renderInline(qLine, [styles.blockquoteText, { color: colors.textSecondary }])}
-                      {isStreaming && isLastPart && qIdx === quoteLines.length - 1 && <StreamingCursor />}
+                      {isBlockquoteAtEndOfPart && qIdx === quoteLines.length - 1 && <StreamingCursor />}
                     </Text>
                   ))}
                 </View>

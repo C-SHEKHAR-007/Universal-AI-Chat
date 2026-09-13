@@ -45,7 +45,7 @@ interface MessageBubbleProps {
   onEditAndResend?: (messageId: string, newContent: string) => void;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({
+const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
   message,
   isStreaming,
   onRegenerate,
@@ -796,3 +796,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+
+export const MessageBubble = React.memo(MessageBubbleComponent);
+

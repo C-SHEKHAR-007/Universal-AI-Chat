@@ -1,5 +1,8 @@
 import { ChatMessage, ChatParameters } from '../types';
 import { CONTEXT_WINDOW_CONFIG, DEFAULT_CHAT_PARAMETERS } from '../constants';
+import { TokenCalculator, estimateTokens } from './tokenCalculator';
+
+export { TokenCalculator, estimateTokens };
 
 export interface ContextMetrics {
   totalTokens: number;
@@ -18,22 +21,6 @@ export interface ContextPayloadResult {
   metrics: ContextMetrics;
 }
 
-/**
- * Fast, robust token estimator tailored for modern LLMs (Llama 3, Gemma, Qwen, GPT-4).
- * Averages ~3.7-4 characters per token for English and code, with overhead for role wrappers.
- */
-export function estimateTokens(text: string): number {
-  if (!text || typeof text !== 'string') return 0;
-  const trimmed = text.trim();
-  if (!trimmed) return 0;
-
-  // Words count heuristic combined with character length
-  const charEstimate = Math.ceil(trimmed.length / CONTEXT_WINDOW_CONFIG.CHARS_PER_TOKEN);
-  const wordEstimate = Math.ceil(trimmed.split(/\s+/).length * CONTEXT_WINDOW_CONFIG.WORDS_MULTIPLIER);
-
-  // Return the weighted blended estimate with role header overhead
-  return Math.max(1, Math.round((charEstimate * 0.6 + wordEstimate * 0.4) + CONTEXT_WINDOW_CONFIG.ROLE_OVERHEAD_TOKENS));
-}
 
 /**
  * Calculates real-time context token metrics for a set of messages and system prompt.

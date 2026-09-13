@@ -3,6 +3,31 @@ import { OllamaProvider } from './OllamaProvider';
 import { OpenAICompatibleProvider } from './OpenAICompatibleProvider';
 import { AIProviderConfig } from '../types';
 
+export type ProviderStrategy = (config: AIProviderConfig) => AIProvider;
+
+export class ProviderRegistry {
+  private static strategies: Map<string, ProviderStrategy> = new Map();
+
+  static register(type: string, strategy: ProviderStrategy): void {
+    this.strategies.set(type.toLowerCase(), strategy);
+  }
+
+  static getStrategy(type: string): ProviderStrategy | undefined {
+    return this.strategies.get(type.toLowerCase());
+  }
+
+  static hasStrategy(type: string): boolean {
+    return this.strategies.has(type.toLowerCase());
+  }
+}
+
+// Register default built-in provider strategies
+ProviderRegistry.register('ollama', (config) => new OllamaProvider(config));
+ProviderRegistry.register('openai_compatible', (config) => new OpenAICompatibleProvider(config));
+ProviderRegistry.register('openai', (config) => new OpenAICompatibleProvider(config));
+ProviderRegistry.register('gemini', (config) => new OpenAICompatibleProvider(config));
+ProviderRegistry.register('custom', (config) => new OpenAICompatibleProvider(config));
+
 export class ProviderFactory {
   private static instances: Map<string, AIProvider> = new Map();
 
@@ -20,19 +45,8 @@ export class ProviderFactory {
     const cached = this.instances.get(key);
     if (cached) return cached;
 
-    let provider: AIProvider;
-    switch (config.type) {
-      case 'ollama':
-        provider = new OllamaProvider(config);
-        break;
-      case 'openai_compatible':
-      case 'openai':
-      case 'gemini':
-      case 'custom':
-      default:
-        provider = new OpenAICompatibleProvider(config);
-        break;
-    }
+    const strategy = ProviderRegistry.getStrategy(config.type);
+    const provider = strategy ? strategy(config) : new OpenAICompatibleProvider(config);
 
     this.instances.set(key, provider);
     return provider;
@@ -54,4 +68,3 @@ export class ProviderFactory {
     this.instances.clear();
   }
 }
-

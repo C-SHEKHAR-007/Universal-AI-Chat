@@ -12,6 +12,8 @@ import {
   DEFAULT_CHAT_PARAMETERS,
   DEFAULT_BENCHMARKS,
 } from '../constants';
+import { IStorageDriver } from './drivers/IStorageDriver';
+import { WebStorageDriver } from './drivers/WebStorageDriver';
 
 export {
   STORAGE_KEYS,
@@ -21,27 +23,33 @@ export {
 };
 
 export class UniversalStorage {
-  private memoryCache: Map<string, string> = new Map();
+  private driver: IStorageDriver;
+
+  constructor(driver?: IStorageDriver) {
+    this.driver = driver || new WebStorageDriver();
+  }
+
+  /**
+   * Switch the storage driver at runtime (e.g. for AsyncStorage on native or in-memory in unit tests)
+   */
+  setDriver(driver: IStorageDriver): void {
+    this.driver = driver;
+  }
+
+  getDriver(): IStorageDriver {
+    return this.driver;
+  }
 
   async getItem(key: string): Promise<string | null> {
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(key);
-    }
-    return this.memoryCache.get(key) || null;
+    return this.driver.getItem(key);
   }
 
   async setItem(key: string, value: string): Promise<void> {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(key, value);
-    }
-    this.memoryCache.set(key, value);
+    await this.driver.setItem(key, value);
   }
 
   async removeItem(key: string): Promise<void> {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(key);
-    }
-    this.memoryCache.delete(key);
+    await this.driver.removeItem(key);
   }
 
   // --- Provider Operations ---

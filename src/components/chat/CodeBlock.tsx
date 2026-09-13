@@ -12,7 +12,7 @@ export interface CodeBlockProps {
   isStreaming?: boolean;
 }
 
-export const CodeBlock: React.FC<CodeBlockProps> = ({
+const CodeBlockComponent: React.FC<CodeBlockProps> = ({
   code,
   language,
   isStreaming = false,
@@ -124,3 +124,6 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 });
+
+export const CodeBlock = React.memo(CodeBlockComponent);
+
