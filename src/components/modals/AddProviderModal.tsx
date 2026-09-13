@@ -61,15 +61,27 @@ export const AddProviderModal: React.FC = () => {
 
   if (!isAddProviderOpen) return null;
 
+  const normalizeUrl = (raw: string, defaultUrl: string) => {
+    let cleaned = (raw || '').trim();
+    if (!cleaned) return defaultUrl;
+    if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+      cleaned = 'http://' + cleaned;
+    }
+    return cleaned.replace(/\/+$/, '');
+  };
+
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestResult(null);
 
+    const defaultUrl = type === 'ollama' ? DEFAULT_OLLAMA_URL : DEFAULT_OPENAI_URL;
+    const finalUrl = normalizeUrl(baseUrl, defaultUrl);
+
     const tempConfig: AIProviderConfig = {
       id: editingProvider?.id || 'temp_' + Date.now(),
-      name: name || 'Test Provider',
+      name: name.trim() || 'Test Provider',
       type,
-      baseUrl: baseUrl.trim(),
+      baseUrl: finalUrl,
       apiKey: apiKey.trim(),
       customChatEndpoint: type === 'custom' ? customEndpoint.trim() : undefined,
       isActive: true,
@@ -97,7 +109,8 @@ export const AddProviderModal: React.FC = () => {
 
   const handleSave = async () => {
     const finalName = name.trim() || (type === 'ollama' ? 'Local Ollama' : 'OpenAI Compatible');
-    const finalUrl = baseUrl.trim() || DEFAULT_OLLAMA_URL;
+    const defaultUrl = type === 'ollama' ? DEFAULT_OLLAMA_URL : DEFAULT_OPENAI_URL;
+    const finalUrl = normalizeUrl(baseUrl, defaultUrl);
 
     const newProvider: AIProviderConfig = {
       id: editingProvider?.id || 'prov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
