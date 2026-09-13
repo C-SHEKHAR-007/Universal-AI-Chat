@@ -8,6 +8,7 @@ import {
   Platform,
   Modal,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import {
   Copy,
@@ -63,7 +64,9 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
     top: number;
     left: number;
     width: number;
-  }>({ top: 100, left: 16, width: 280 });
+    maxHeight?: number;
+    isMobile?: boolean;
+  }>({ top: 100, left: 16, width: 320, isMobile: false });
 
   const charCount = message.content.length;
   const wordCount = message.content.trim() ? message.content.trim().split(/\s+/).length : 0;
@@ -91,8 +94,19 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
     const calculateAndOpen = (x: number, y: number, width: number, height: number) => {
       const screenWidth = typeof window !== 'undefined' ? window.innerWidth : Dimensions.get('window').width;
       const screenHeight = typeof window !== 'undefined' ? window.innerHeight : Dimensions.get('window').height;
-      const cardWidth = Math.min(290, screenWidth - 28);
-      const estimatedHeight = 260;
+      const isMobile = screenWidth < 520;
+      const cardWidth = isMobile ? Math.min(380, screenWidth - 32) : Math.min(340, screenWidth - 32);
+      const estimatedHeight = 310;
+      const maxHeight = Math.min(540, screenHeight * 0.82);
+
+      // On mobile / small screens, center modal dialog for optimal readability and touch reach
+      if (isMobile) {
+        const popTop = Math.max(24, (screenHeight - Math.min(estimatedHeight, maxHeight)) / 2);
+        const popLeft = Math.max(16, (screenWidth - cardWidth) / 2);
+        setPopoverPosition({ top: popTop, left: popLeft, width: cardWidth, maxHeight, isMobile: true });
+        setShowOptions(true);
+        return;
+      }
 
       // Top navigation header is ~56px, bottom input bar is ~80px
       const headerOffset = 58;
@@ -101,8 +115,8 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
       // If coordinates are missing or 0 (e.g. Android measurement glitch), center on screen
       if ((!x && !y) || (x <= 0 && y <= 0)) {
         const fallbackTop = Math.max(headerOffset + 16, (screenHeight - estimatedHeight) / 2 - 20);
-        const fallbackLeft = Math.max(14, (screenWidth - cardWidth) / 2);
-        setPopoverPosition({ top: fallbackTop, left: fallbackLeft, width: cardWidth });
+        const fallbackLeft = Math.max(16, (screenWidth - cardWidth) / 2);
+        setPopoverPosition({ top: fallbackTop, left: fallbackLeft, width: cardWidth, maxHeight, isMobile: false });
         setShowOptions(true);
         return;
       }
@@ -125,9 +139,9 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
       }
 
       // Horizontal alignment: clamp within screen boundaries
-      const popLeft = Math.max(14, Math.min(x, screenWidth - cardWidth - 14));
+      const popLeft = Math.max(16, Math.min(x, screenWidth - cardWidth - 16));
 
-      setPopoverPosition({ top: popTop, left: popLeft, width: cardWidth });
+      setPopoverPosition({ top: popTop, left: popLeft, width: cardWidth, maxHeight, isMobile: false });
       setShowOptions(true);
     };
 
@@ -363,12 +377,17 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
                   transparent
                   visible={showOptions}
                   onRequestClose={() => setShowOptions(false)}
-                  animationType="none"
+                  animationType={popoverPosition.isMobile ? 'fade' : 'none'}
                 >
                   <View style={styles.modalRoot}>
-                    {/* Transparent Dismiss Backdrop */}
+                    {/* Transparent/Dim Dismiss Backdrop */}
                     <TouchableOpacity
-                      style={StyleSheet.absoluteFill}
+                      style={[
+                        StyleSheet.absoluteFill,
+                        popoverPosition.isMobile && {
+                          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.65)' : 'rgba(0, 0, 0, 0.45)',
+                        },
+                      ]}
                       activeOpacity={1}
                       onPress={() => setShowOptions(false)}
                     />
@@ -381,129 +400,156 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
                           top: popoverPosition.top,
                           left: popoverPosition.left,
                           width: popoverPosition.width,
+                          maxHeight: popoverPosition.maxHeight,
                           backgroundColor: colors.card,
                           borderColor: colors.border,
                           shadowColor: colors.textPrimary,
                         },
                       ]}
                     >
-                      {/* Model & Provider Card */}
-                      <View
-                        style={[
-                          styles.popoverModelBox,
-                          {
-                            backgroundColor: colors.backgroundSecondary,
-                            borderColor: colors.borderLight,
-                          },
-                        ]}
-                      >
-                        <View style={[styles.popoverModelIconWrap, { backgroundColor: colors.primaryMuted }]}>
-                          <Cpu size={16} color={colors.primary} />
-                        </View>
-                        <View style={styles.popoverModelTextCol}>
-                          <Text
-                            style={[styles.popoverModelName, { color: colors.textPrimary }]}
-                            numberOfLines={2}
-                          >
-                            {message.telemetry?.modelId || FALLBACK_MODEL_NAME}
-                          </Text>
-                          {message.telemetry?.providerName ? (
-                            <Text
-                              style={[styles.popoverProviderName, { color: colors.textMuted }]}
-                              numberOfLines={1}
-                            >
-                              {message.telemetry.providerName}
-                            </Text>
-                          ) : null}
-                        </View>
-                      </View>
-
-                      {/* Telemetry Stats */}
-                      <View style={[styles.popoverStatsSection, { borderColor: colors.borderLight }]}>
-                        {message.telemetry?.tokensPerSec ? (
-                          <View style={styles.popoverStatRow}>
-                            <View style={styles.popoverStatLabelGroup}>
-                              <Zap size={13} color={colors.success} />
-                              <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
-                                Speed
-                              </Text>
-                            </View>
-                            <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
-                              {message.telemetry.tokensPerSec} tok/s
-                            </Text>
-                          </View>
-                        ) : null}
-
-                        {message.telemetry?.tokensOut ? (
-                          <View style={styles.popoverStatRow}>
-                            <View style={styles.popoverStatLabelGroup}>
-                              <Activity size={13} color={colors.primary} />
-                              <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
-                                Generated
-                              </Text>
-                            </View>
-                            <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
-                              {message.telemetry.tokensOut} tokens
-                            </Text>
-                          </View>
-                        ) : null}
-
-                        {message.telemetry?.ttftMs ? (
-                          <View style={styles.popoverStatRow}>
-                            <View style={styles.popoverStatLabelGroup}>
-                              <Clock size={13} color={colors.textMuted} />
-                              <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
-                                TTFT
-                              </Text>
-                            </View>
-                            <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
-                              {formatDurationSeconds(message.telemetry.ttftMs)}
-                            </Text>
-                          </View>
-                        ) : null}
-
-                        <View style={styles.popoverStatRow}>
-                          <View style={styles.popoverStatLabelGroup}>
-                            <Info size={13} color={colors.textMuted} />
-                            <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
-                              Length
-                            </Text>
-                          </View>
-                          <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
-                            {wordCount} words ({charCount} chars)
+                      {/* Popover Header */}
+                      <View style={[styles.popoverHeaderRow, { borderBottomColor: colors.borderLight }]}>
+                        <View style={styles.popoverHeaderLeft}>
+                          <Info size={14} color={colors.primary} />
+                          <Text style={[styles.popoverHeaderTitle, { color: colors.textPrimary }]}>
+                            Response Details
                           </Text>
                         </View>
-
-                        {message.createdAt ? (
-                          <View style={styles.popoverStatRow}>
-                            <View style={styles.popoverStatLabelGroup}>
-                              <Clock size={13} color={colors.textMuted} />
-                              <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
-                                Time
-                              </Text>
-                            </View>
-                            <Text style={[styles.popoverStatValue, { color: colors.textMuted }]}>
-                              {formatClockTime(message.createdAt)}
-                            </Text>
-                          </View>
-                        ) : null}
-                      </View>
-
-                      {/* Options / Actions */}
-                      <View style={styles.popoverActionsSection}>
                         <TouchableOpacity
-                          style={[styles.popoverActionBtn, { backgroundColor: colors.backgroundSecondary }]}
-                          onPress={() => {
-                            handleCopy(message.content);
-                            setShowOptions(false);
-                          }}
+                          style={[styles.popoverCloseBtn, { backgroundColor: colors.backgroundSecondary }]}
+                          onPress={() => setShowOptions(false)}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          accessibilityLabel="Close response details"
                         >
-                          <Copy size={13} color={colors.primary} />
-                          <Text style={[styles.popoverActionBtnText, { color: colors.textPrimary }]}>
-                            Copy full response
-                          </Text>
+                          <X size={14} color={colors.textMuted} />
                         </TouchableOpacity>
                       </View>
+
+                      {/* Scrollable Body */}
+                      <ScrollView
+                        style={styles.popoverScrollView}
+                        contentContainerStyle={styles.popoverScrollContent}
+                        showsVerticalScrollIndicator={false}
+                        bounces={false}
+                      >
+                        {/* Model & Provider Card */}
+                        <View
+                          style={[
+                            styles.popoverModelBox,
+                            {
+                              backgroundColor: colors.backgroundSecondary,
+                              borderColor: colors.borderLight,
+                            },
+                          ]}
+                        >
+                          <View style={[styles.popoverModelIconWrap, { backgroundColor: colors.primaryMuted }]}>
+                            <Cpu size={16} color={colors.primary} />
+                          </View>
+                          <View style={styles.popoverModelTextCol}>
+                            <Text
+                              style={[styles.popoverModelName, { color: colors.textPrimary }]}
+                              numberOfLines={2}
+                            >
+                              {message.telemetry?.modelId || FALLBACK_MODEL_NAME}
+                            </Text>
+                            {message.telemetry?.providerName ? (
+                              <Text
+                                style={[styles.popoverProviderName, { color: colors.textMuted }]}
+                                numberOfLines={1}
+                              >
+                                {message.telemetry.providerName}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </View>
+
+                        {/* Telemetry Stats */}
+                        <View style={[styles.popoverStatsSection, { borderColor: colors.borderLight }]}>
+                          {message.telemetry?.tokensPerSec ? (
+                            <View style={styles.popoverStatRow}>
+                              <View style={styles.popoverStatLabelGroup}>
+                                <Zap size={13} color={colors.success} />
+                                <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
+                                  Speed
+                                </Text>
+                              </View>
+                              <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
+                                {message.telemetry.tokensPerSec} tok/s
+                              </Text>
+                            </View>
+                          ) : null}
+
+                          {message.telemetry?.tokensOut ? (
+                            <View style={styles.popoverStatRow}>
+                              <View style={styles.popoverStatLabelGroup}>
+                                <Activity size={13} color={colors.primary} />
+                                <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
+                                  Generated
+                                </Text>
+                              </View>
+                              <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
+                                {message.telemetry.tokensOut} tokens
+                              </Text>
+                            </View>
+                          ) : null}
+
+                          {message.telemetry?.ttftMs ? (
+                            <View style={styles.popoverStatRow}>
+                              <View style={styles.popoverStatLabelGroup}>
+                                <Clock size={13} color={colors.textMuted} />
+                                <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
+                                  TTFT
+                                </Text>
+                              </View>
+                              <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
+                                {formatDurationSeconds(message.telemetry.ttftMs)}
+                              </Text>
+                            </View>
+                          ) : null}
+
+                          <View style={styles.popoverStatRow}>
+                            <View style={styles.popoverStatLabelGroup}>
+                              <Info size={13} color={colors.textMuted} />
+                              <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
+                                Length
+                              </Text>
+                            </View>
+                            <Text style={[styles.popoverStatValue, { color: colors.textPrimary }]}>
+                              {wordCount} words ({charCount} chars)
+                            </Text>
+                          </View>
+
+                          {message.createdAt ? (
+                            <View style={styles.popoverStatRow}>
+                              <View style={styles.popoverStatLabelGroup}>
+                                <Clock size={13} color={colors.textMuted} />
+                                <Text style={[styles.popoverStatLabel, { color: colors.textSecondary }]}>
+                                  Time
+                                </Text>
+                              </View>
+                              <Text style={[styles.popoverStatValue, { color: colors.textMuted }]}>
+                                {formatClockTime(message.createdAt)}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
+
+                        {/* Options / Actions */}
+                        <View style={styles.popoverActionsSection}>
+                          <TouchableOpacity
+                            style={[styles.popoverActionBtn, { backgroundColor: colors.backgroundSecondary }]}
+                            onPress={() => {
+                              handleCopy(message.content);
+                              setShowOptions(false);
+                            }}
+                          >
+                            <Copy size={13} color={colors.primary} />
+                            <Text style={[styles.popoverActionBtnText, { color: colors.textPrimary }]}>
+                              Copy full response
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </ScrollView>
                     </View>
                   </View>
                 </Modal>
@@ -683,10 +729,42 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: spacing.md,
     zIndex: 99999,
-    elevation: 16,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
+    elevation: 20,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    overflow: 'hidden',
+  },
+  popoverHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 10,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+  },
+  popoverHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  popoverHeaderTitle: {
+    fontSize: typography.size.xs + 1,
+    fontWeight: typography.weight.bold,
+    letterSpacing: 0.2,
+  },
+  popoverCloseBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  popoverScrollView: {
+    flexGrow: 0,
+  },
+  popoverScrollContent: {
+    paddingBottom: 2,
   },
   popoverModelBox: {
     flexDirection: 'row',
@@ -698,8 +776,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   popoverModelIconWrap: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -712,19 +790,19 @@ const styles = StyleSheet.create({
   popoverModelName: {
     fontSize: typography.size.xs + 1,
     fontWeight: typography.weight.bold,
-    lineHeight: 17,
+    lineHeight: 18,
   },
   popoverProviderName: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: typography.weight.medium,
     marginTop: 2,
   },
   popoverStatsSection: {
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     marginVertical: 4,
-    gap: 6,
+    gap: 8,
   },
   popoverStatRow: {
     flexDirection: 'row',
@@ -737,26 +815,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   popoverStatLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: typography.weight.medium,
   },
   popoverStatValue: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: typography.weight.semibold,
   },
   popoverActionsSection: {
-    marginTop: 8,
+    marginTop: 10,
   },
   popoverActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: borderRadius.sm,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: borderRadius.md,
   },
   popoverActionBtnText: {
-    fontSize: typography.size.xs,
+    fontSize: typography.size.xs + 1,
     fontWeight: typography.weight.semibold,
   },
 
